@@ -20,9 +20,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-An `R` package for fitting a prevalence-incidence-cure (PIC) model interval-censored screening data of a population with a temporarily elevated risk of disease. 
-
-The goal of PICmodel is to ...
+`PICmodel`: A prevalence-incidence-cure (PIC) model for interval-censored data to estimate the cumulative disease risk in a population with a temporarily elevated risk of disease, e.g., risk of CIN2+ in HPV-positive women. In longitudinal screening studies it is possible to observe prevalent, early or late events during follow-up. In our model, early events are modelled via a competing risks framework, infections either progress to the disease state or to a (latent) “cure” state (i.e. viral clearance) at constant rates. Late events are modelled by adding background risk to the model. Parameters can depend on individual risk factors and are estimated with an expectation-maximisation (EM) algorithm with weakly informative Cauchy priors. More details are given in the accompanying paper: *eventual link to paper*.
 
 ## Installation
 
@@ -41,13 +39,16 @@ This is a basic example which shows you how to solve a common problem:
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
 sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
-head(sim.dat)
-sim.fit <- model.fit(c(), c(), c(), sim.dat)
-sim.fit$summary
-
-library(survival)
-sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
+head(sim.dat) # view simulated data
+sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit$summary # view model fit summary
 sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
-plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0, 0.6))
+
+
+library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
+sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
+
+# plot PICmodel predictions and KM-curve to compare 
+plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0.2, 0.65))
 lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
