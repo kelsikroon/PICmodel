@@ -1,6 +1,9 @@
 
 #' Fit the prevalence-incidence-cure model
 #'
+#' This function fits our Prevalence-Incidence-Cure (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
+#' It is possible for the user to select the covariates that will be used for each parameter.
+#'
 #' @param l1_x A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data), can be blank
 #' @param l2_x A vector containing the names of covariates used in the clearance rate parameter (must match column name(s) in the input data), can be blank
 #' @param pi_x A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data), can be blank
@@ -20,16 +23,18 @@
 #' @param intercept.clear Defaults to TRUE.
 #' @param intercept.prev Defaults to TRUE.
 #' @return The output is a list containing the following elements:
-#'   - model: list containing names of covariates used for each parameter
-#'   - initial.values: either the initial values determined by the Short EM algorithm process or the supplied initial values
-#'   - fixed.h: the fixed value of background risk if supplied, otherwise NULL
-#'   - theta.hat: optimum parameter values estimated by the EM algorithm
-#'   - num.iterations: number of iterations until the EM algorithm converged
-#'   - log.likelihood: value of the log.likelihood at the maximum likelihood estimates
-#'   - hess: hessian matrix at the maximum likelihood estimates
-#'   - grad: value of the gradient vector at the the maximum likelihood estimates
-#'   - std.dev: standard deviation of parameter estimates
-#'   - summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons)
+#' \itemize{
+#' \item model: list containing names of covariates used for each parameter
+#' \item initial.values: either the initial values determined by the Short EM algorithm process or the supplied initial values
+#' \item fixed.h: the fixed value of background risk if supplied, otherwise NULL
+#' \item theta.hat: optimum parameter values estimated by the EM algorithm
+#' \item num.iterations: number of iterations until the EM algorithm converged
+#' \item log.likelihood: value of the log.likelihood at the maximum likelihood estimates
+#' \item hess: hessian matrix at the maximum likelihood estimates
+#' \item grad: value of the gradient vector at the the maximum likelihood estimates
+#' \item std.dev: standard deviation of parameter estimates
+#' \item summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons)
+#' }
 #' @export
 model.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20,
                       silent=T,  init=NULL, include.h=T, two.step.h=T, include.priors=T, fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
@@ -329,10 +334,6 @@ model.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, shor
       next_em_step <- mstep.h(current_theta, estep.h(current_theta, data, include.h, est.h), data, include.h, est.h)
       new_theta <- as.vector(next_em_step[[1]])
       new_llk <- log.likelihood.h(new_theta, data, include.h, est.h)
-      if (any(abs(current_theta - new_theta) > 1)){
-        print(current_theta)
-
-      }
       if (!silent & (iter %/% 10 ==0 | iter %% 10 ==0)) print(round(c(new_theta, new_llk), 4))
       iter <- iter + 1
       if (iter > 1000){
@@ -342,7 +343,7 @@ model.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, shor
     hess <- numerical.hess(new_theta, data, include.h, est.h)
     names(new_theta) <- pars
     std.dev <- round(sqrt(diag(solve(-hess))),4)
-    param <- c(if(include.h){"h"}, if(intercept.prog) {"intercept"}, l1_x, if(intercept.clear) {"intercept"}, l2_x, if(intercept.prev) {"intercept"}, pi_x)
+    param <- c(if(include.h & est.h){"h"}, if(intercept.prog) {"intercept"}, l1_x, if(intercept.clear) {"intercept"}, l2_x, if(intercept.prev) {"intercept"}, pi_x)
     summary <- round(data.frame(theta.hat = new_theta, std.dev, lower = new_theta - 1.96*std.dev, upper = new_theta + 1.96*std.dev), 4)
     summary <- cbind(param, summary)
     rownames(summary) <- names(new_theta)
@@ -472,11 +473,310 @@ model.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, shor
 }
 
 
+#' @importFrom stats D na.omit rexp rnorm runif
+#' @importFrom utils tail
+#' @importFrom Rlab rbern
+NULL
 
-#' gamma.simulator(): function to simulate data from our model for a specified shape parameter (k), screening interval, with/without background risk (include.h)
-#' note:
-#'   - parameters go in order (background risk, lambda_1, lambda_2, prevalent)
-#'   - this code is simplified to not include covariates
+#' Screening data simulator
+#'
+#' Simulates screening data with user-specified parameters based on the example of cervical cancer screening data. Useful for validating that the model is able to recover the true parameter values. Currently it is only possible to simulate
+#' data with the baseline covariates age (continuous between 3- and 70), HPV genotype (HPV16 positive or negative), and cytology (normal/ abnormal).
+#'
+#' @param n Number of women in the simulated data set.
+#' @param l1_x A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter. Options are "age", "HPV16" and "cytology".
+#' @param l2_x A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter. Options are "age", "HPV16" and "cytology".
+#' @param pi_x A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease). Options are "age", "HPV16" and "cytology".
+#' @param params Numerical vector the parameter values to be used in the data simulation (first value is background risk, then l1, l2, pi)
+#' @param show_prob A value representing the probability of a woman showing up for the screening visit. Defaults to 0.9.
+#' @param interval A value representing the interval between screening rounds (in years). Defaults to 3.
+#' @param include.h Indicator variable for whether to background risk in the simulation procedure. Defaults to TRUE.
+#' @return A data frame containing the left and right interval of CIN2+ detection, the indicator of prevalent disease, age (continuous), HPV genotype (HPV16 or other, 1=HPV16), and cytology result (normal or abnormal, 1=abnormal).
+#' @export
+#loosely based on cervical cancer data
+screening.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T){
+  age <- runif(n, 30, 70)
+  age <- 0.5*(age - mean(age))/sd(age)
+
+  # Cytology Results: this is an indicator variable so 1 means abnormal cytology and 0 means not abnormal (or unknown for z=NA)
+  # if they did not show up for screening at time 0 then their cytology result is 0 because it is unknown
+  cytology <- rbern(n, 0.4)
+
+  # HPV genotype (HPV 16 or other) - this is an indicator variable so 1 means they have HPV16 and 0 means other HPV type
+  hpv <- rbern(n, 0.3)
+
+  create.covariate.data <- function(data){
+    data[['intercept']] <- rep(1, length(dim(data)[1]))
+    data1 <- as.matrix(data[,c("intercept", l1_x)])
+    data2 <- as.matrix(data[,c("intercept", l2_x)])
+    data3 <- as.matrix(data[,c("intercept", pi_x)])
+    return(list(data1, data2, data3))
+  }
+  n1 <- length(l1_x) + 1
+  n2 <- length(l2_x) + 1
+  n3 <- length(pi_x) + 1
+
+  covariate_data <- create.covariate.data(data=data.frame(age=age, hpv=hpv, cyt=cytology))
+  data1 <- covariate_data[[1]]
+  data2 <- covariate_data[[2]]
+  data3 <- covariate_data[[3]]
+
+  if (include.h){
+    h <- params[1]
+    params <- params[-1]
+  }
+
+  l1 <- exp(data1 %*% params[1:(n1)])
+  l2 <- exp(data2 %*% params[(n1+1):(n1+n2)])
+  if (n3 == 1){
+    # if pi has no covariates then the value of p is the same for all women
+    p <- params[n1+n2+n3]
+  }else if (n3 > 1){
+    p <- exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)]))
+  }
+
+  # disease process
+  t1 <- ifelse(rbern(n, p)==1, 0, Inf) # prevalent CIN2/3
+  t2 <- ifelse(rbern(n, l1/(l1+l2))==1, rexp(n, rate=(l1+l2)), Inf) # due to the HPV infection at baseline
+  if (include.h) {
+    t3 <- rexp(n, rate=exp(h)) # due to the background risk (simulate value for everyone)
+    t <- pmin(t1, t2, t3) # keep the minimum value as the actual event time
+    cause <- apply(data.frame(t1, t2, t3), 1, FUN = which.min)
+  }else{
+    t <- pmin(t1, t2) # keep the minimum value as the actual event time
+    cause <- apply(data.frame(t1, t2), 1, FUN = which.min)
+  }
+
+  # create observation process
+  n.tests <- round(25/interval)  # have at least 25 years of screening
+  screening_times <- data.frame(x1 = ifelse(rbern(n, show_prob), 0, NA))  # test at 0 years
+  for (i in 1:n.tests){
+    # loop through number of tests and generate screening time using normal distribution around that interval times test number
+    # if interval = 3, then these are generated from beta distributions with means around 3, 6, 9...
+    screening_times <- data.frame(cbind(screening_times, xi = ifelse(rbern(n, show_prob), (i-1)*interval + interval/2 + rbeta(n, 20, 20)*interval, NA) ))
+  } #
+  #print(head(screening_times))
+  screening_times[!is.na(screening_times) & screening_times<0] <- 0
+
+
+  screening_times$actual <- t
+  screening_times$cause <- cause
+  screening_times$cause <- NULL
+  # create a list of the screening times with NA values removed for each subject
+  # the code makes the following change: 0   NA    t2    t3    NA  ---> 0    t2    t3
+  # this allows us to find the interval where CIN2/3 was detected
+  if (show_prob ==1) {
+    screens <- lapply(seq(1, n), function(x) unlist((screening_times)[x,] ))
+  }
+  else {
+    screens <- apply(screening_times, 1, function(x) c(na.omit(unlist(x, use.names=FALSE))))
+  }
+
+
+  z <- rep(0, n) # create the indicator variable Z
+
+  # create left intervals by finding the last value in the list of screens that is smaller than the actual event time ß
+  left <- vapply(screens, function(x) x[Position(function(z) z <= x[length(x)], x[c(1:(length(x))-1)], right=TRUE)], 1)
+
+  # if left interval is NA then disease was unknown at baseline because it was not checked
+  z[is.na(left)] <- NA
+
+  left[is.na(left)] <- 0 # set unknown left intervals to 0 because CIN2/3 could have been there at baseline
+
+  # create a list of right intervals by finding the first value in the
+  # list of screen times that is greater than the actual event time
+  right <- vapply(screens, function(x) x[Position(function(z) z > x[length(x)], x[c(1:(length(x))-1)])], 1)
+
+  # if the actual event time t=0 and left interval l=0 and the indicator is not unknown
+  # (meaning disease was checked at baseline), then the right interval is also zero
+  right[left==0 & t==0 & !is.na(z)] <-  0
+
+  z[which(right==0)] <- 1 # right is only zero when disease is prevalent (defined above)
+
+  # if the actual time of CIN2/3 development is after the last screening time, then the set the time to Inf
+  last_screening_time <- vapply(screens, function(x) tail(x, 2)[1], 1)
+  right[screening_times$actual > last_screening_time] <- Inf
+
+  # if the right interval is NA then set it to infinity - this happens if all screening
+  # rounds were NA (very rare, this is just to avoid errors in case it happens)
+  right[is.na(right)] <- Inf
+
+  return(data.frame(left, right, z = z, age = age, hpv = hpv, cyt=cytology, cause=cause, actual=t))
+}
+
+
+
+#' Model Predictions
+#' @param l1_x A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter (must match column name(s) in the input data)
+#' @param l2_x A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter (must match column name(s) in the input data)
+#' @param pi_x A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease) (must match column name(s) in the input data)
+#' @param data Data set of covariates from which to make the predictions.
+#' @param time.points Numeric vector of time points used to make cumulative risk predictions
+#' @param fit Parameter estimates for the model to be used (output from model.fit)
+#' @param calc.CI Indicator variable for whether confidence intervals for the cumulative risk should be calculated. Defaults to FALSE.
+#' @param include.h Indicator variable for whether background risk was included in the model fitting procedure. Defaults to TRUE
+#' @return The output is a list for each unique combination of covariates used in the model containing the time points, the cumulative risk estimate along with the upper and lower 95% confidence intervals.
+#'
+#' @export
+model.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F, include.h=T){
+  g <- function(l1, l2, t){
+    return(l1 / (l1 + l2) * (1 - exp(-(l1 + l2)* t)))
+  }
+
+  se.cumrisk <- function(t, data1, data2, data3, n1, n2, n3, fit, include.h){
+    create.par <- function(n1, n2, n3) {
+      par1 <- paste0(c("g"), seq(0, n1 - 1))
+      par2 <- paste0(c("w"), seq(0, n2 - 1))
+      par3 <- paste0(c("p"), seq(0, n3 - 1))
+      return(c(par1, par2, par3))
+    }
+
+    if (include.h){
+      pars <- c("h", create.par(n1, n2, n3))
+    }else{
+      pars <- create.par(n1, n2, n3)
+      h <- 0
+    }
+
+    if (n1 !=1){
+      for (i in 1:(n1-1)){
+        assign(paste0("data1", i), data1[,i+1], envir=environment())
+      }}
+    if (n2 !=1){
+      for (i in 1:(n2-1)){
+        assign(paste0("data2", i), data2[,i+1], envir=environment())
+      }}
+    if (n3!=1){
+      for (i in 1:(n3-1)){
+        assign(paste0("data3", i), data3[,i+1], envir=environment())
+      }}
+
+
+    # assign the values of current_par to vectors with names from the 'pars' list
+    for (i in 1:length(pars)){
+      assign(pars[i], fit[["theta.hat"]][i], envir=environment())
+    }
+
+
+    # create the expression for the complementary log log cumulative risk, it is coded this way to allow for user-defined covariates
+    # and then we take the derivative so it needs to be in expression form
+    create.cllcr.expr <- function(n1, n2, n3, pars, data1, data2, data3){
+      pars <- pars[-1]
+      # expression for lambda_1 (progression rate parameter)
+      expr1 <- pars[1]
+      if (n1 != 1){
+        for (i in 1:(n1-1)){
+          expr1 <- paste0(expr1, "+", pars[1+i], "*", "data1", i)
+        }}
+
+      # expression for lambda_2 (clearance rate parameter)
+      expr2 <- pars[n1+1]
+      if (n2!=1){
+        for (i in 1:(n2-1)){
+          expr2 <- paste0(expr2, "+", pars[n1+1+i], "*", "data2", i)
+        }}
+
+      # expression for pi (prevalent probability parameter)
+      expr3 <- pars[n1+n2+1]
+      if (n3 > 1){
+        for (i in 1:(n3-1)){
+          expr3 <- paste0(expr3, "+", pars[n1+n2+1+i], "*", "data3", i)
+        }
+
+        #  expected complete log-likelihood for Ri!=Inf
+        llcr <- paste0("log(- log( (exp(", expr3, ")/(1+ exp(", expr3, "))) + (1/(1+exp(", expr3, ")))*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
+                       expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t)))))" )
+
+
+      }else if (n3 == 1){ # if there are no covariates for pi we use a different expression (don't need to use logit function)
+        #  expected complete log-likelihood for Ri!=Inf for when there is only intercept for pi parameter
+        # llcr <- paste0("log(- log( log(", expr3, ") + (log(1-", expr3, ") + log((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
+        #                expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t))))))" )
+        llcr <- paste0("log(- log( ", expr3, " + (1 - ", expr3, ")*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
+                       expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t)))))" )
+      }
+
+      # convert from string to expression to be used in the differentiate function in the gradient calculation
+      return(str2expression(llcr))
+    }
+
+    # function to calculate the gradient of the log log cumulative risk using the built in R derivative function D()
+    grad.loglog <- function(par){
+      return(eval(D(create.cllcr.expr(n1, n2, n3, pars, data1, data2, data3), par)))
+    }
+
+    return(sqrt(as.numeric(t(sapply(pars, grad.loglog)) %*% (solve(-fit[["hess"]])) %*% (sapply(pars, grad.loglog)))))
+  }
+
+
+  requireNamespace("dlpyr", quietly = TRUE)
+  theta.hat <- fit$theta.hat
+  if (include.h) {
+    h <- exp(theta.hat[1])
+    theta.hat <- theta.hat[-1]
+  }else{
+    h <- 0
+  }
+
+  n1 <- length(l1_x) + 1
+  n2 <- length(l2_x) + 1
+  n3 <- length(pi_x) + 1
+
+  preds <- list()
+  data <- unique(data)
+  rownames(data) <- seq(1:nrow(data))
+  # calculate the cumulative risk for each unique combination of covariates in the input prediction data and store in a list
+  for (row in 1:nrow(data)){
+    sub.data <- subset(data,  subset=rownames(data) == row)
+
+    create.covariate.data <- function(data){
+      data[['intercept']] <- rep(1, length(dim(data)[1]))
+      data1 <- as.matrix(data[,c("intercept", l1_x)])
+      data2 <- as.matrix(data[,c("intercept", l2_x)])
+      data3 <- as.matrix(data[,c("intercept", pi_x)])
+      return(list(data1, data2, data3))
+    }
+
+    covariate.data <- create.covariate.data(sub.data)
+    data1 <- covariate.data[[1]]
+    data2 <- covariate.data[[2]]
+    data3 <- covariate.data[[3]]
+
+    l1 <- as.numeric(exp(data1 %*% theta.hat[1:(n1)]))
+    l2 <- as.numeric(exp(data2 %*% theta.hat[(n1+1):(n1+n2)]))
+    if (n3 == 1){
+      #if pi has no covariates then the value of p is the same for all women
+      p <- theta.hat[n1+n2+n3]
+    }else if (n3 > 1){
+      p <- as.numeric(exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])))
+    }
+    prob <- p + (1-p)*(1 - exp(-h*time.points) + exp(-h*time.points)*g(l1, l2, time.points))
+
+    ## calculate confidence errors for cumulative risk using the complementary log-log cumulative risk
+    if (calc.CI){
+      cr.est <- log(-log(prob))
+      cr.se <- sapply(time.points,  se.cumrisk, data1, data2, data3, n1, n2, n3, fit, include.h)
+      cr.lci <- exp(-exp(cr.est + 1.96*cr.se))
+      cr.uci <- exp(-exp(cr.est - 1.96*cr.se))
+      preds[[row]] <- data.frame(Time=time.points, CR = prob, CR.se = cr.se, CR.lower95 = cr.lci, CR.upper95 = cr.uci)
+    }else{
+      preds[[row]] <- data.frame(Time=time.points, CR = prob)
+    }
+
+  }
+  return(preds)
+}
+
+
+#' Gamma Simulator
+#'
+#' Function to simulate data for a variant of our model that uses the Gamma distribution for Cause 1 (i.e., progression) in the competing risks framework used for incident disease. Note this code is simplified to not include covariates
+#' @param n Number of subjects requried in simulated data set
+#' @param params Parameter values for simple model without covariates. Note that parameters go in order (1) background risk, (2) lambda_1, (3), lambda_2, and (4) prevalent).
+#' @param k Shape parameter for gamma distribution
+#' @param interval Screening interval (in years). Defaults to 3.
+#' @param include.h Indicator variable for whether to include background risk or not. Defaults to TRUE.
+#' @export
 gamma.simulator <- function(n, params,  k, interval=3, include.h=T){
   show_prob <- 0.8
   h <- exp(params[1])
@@ -539,9 +839,27 @@ gamma.simulator <- function(n, params,  k, interval=3, include.h=T){
   return(data.frame(left, right, z = z,  cause=cause, actual=t))
 }
 
-#' gamma.score.test(): function to compute p-value of score test given model fit, step size (dh), order (accuracy, 1, 2 or 4) and data set
+
+
+#' Gamma Score test
+#'
+#' Function to compute p-value of the score test given model fit, step size (dh), order (accuracy, 1, 2 or 4) and data.
+#'
+#' @param fit
+#' @param fit
+#' @param fit
+#' @param fit
+#' @return  The output is a list containing the following elements:
+#' \itemize{
+#' \item grad: value of the gradient at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
+#' \item inv.hess: value of the inverse hessian at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
+#' \item hess: value of the hessian at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
+#' \item loglik: value of the log-likelihood at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
+#' \item p.val: p-value of the score test for whether Cause 1 follows a Gamma rather than Exponential distribution (tests whether shape parameter equals 1 or not).
+#' }
+#' @export
 gamma.score.test <- function(fit, dh, accuracy, data){
-  require("stringr")
+  #require("stringr")
   fixed.h <- fit$fixed.h
   n <- length(data$right)
 
