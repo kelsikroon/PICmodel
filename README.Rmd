@@ -25,11 +25,12 @@ This `R` package fits prevalence-incidence-cure (PIC) models to interval-censore
 In longitudinal screening studies it is possible to observe prevalent, early or late events during follow-up. In our model, early events are modelled via a competing risks framework, infections either progress to the disease state or to a (latent) “cure” state (i.e. viral clearance) at constant rates. Late events are modelled by adding background risk to the model. Parameters can depend on individual risk factors and are estimated with an expectation-maximisation (EM) algorithm with weakly informative Cauchy priors. More details are given in the accompanying paper: *eventual link to paper*.
 
 There are five main functions in this package: 
-- `model.fit`
-- `model.predict`
-- `model.simulator`
-- `score.test.gamma`
-- `simulator.gamma`
+
+- `model.fit`: fits our Prevalence-Incidence-Cure model
+- `model.predict`: makes predictions from the model
+- `model.simulator`: simulates data under user-specified parameter values and covariates
+- `score.test.gamma`: performs a score test whether the shape parameter of the Gamma distribution for progression is equal to one or not. 
+- `simulator.gamma`: simulates data where progression follows a Gamma rather than exponential distribution and so can have a shape parameter not equal to one. Does not allow for covariates, yet. 
 
 
 ## Installation
@@ -62,3 +63,14 @@ sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
 plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0.2, 0.65))
 lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
+
+
+## Upcoming 
+
+- update model predict functions to allow for model fits where the general intercept was not estimated. 
+- update Gamma simulator functions 
+
+
+## Authors
+
+- **Kelsi Kroon** k.kroon@amsterdamumc.nl

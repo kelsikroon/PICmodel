@@ -21,9 +21,17 @@ estimated with an expectation-maximisation (EM) algorithm with weakly
 informative Cauchy priors. More details are given in the accompanying
 paper: *eventual link to paper*.
 
-There are five main functions in this package: - `model.fit` -
-`model.predict` - `model.simulator` - `score.test.gamma` -
-`simulator.gamma`
+There are five main functions in this package:
+
+- `model.fit`: fits our Prevalence-Incidence-Cure model
+- `model.predict`: makes predictions from the model
+- `model.simulator`: simulates data under user-specified parameter
+  values and covariates
+- `score.test.gamma`: performs a score test whether the shape parameter
+  of the Gamma distribution for progression is equal to one or not.
+- `simulator.gamma`: simulates data where progression follows a Gamma
+  rather than exponential distribution and so can have a shape parameter
+  not equal to one. Does not allow for covariates, yet.
 
 ## Installation
 
@@ -44,20 +52,20 @@ library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
 sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
-#>       left    right  z        age hpv cyt cause     actual
-#> 1 23.95217      Inf  0 -0.5954880   1   0     3 207.128033
-#> 2  3.20959 9.021079  0 -0.3315659   0   1     2   3.299025
-#> 3 24.33586      Inf  0 -0.6821572   0   0     3 406.783313
-#> 4 24.13551      Inf  0 -0.1907631   1   0     3 135.957772
-#> 5  0.00000 3.133322 NA -0.0470623   0   0     1   0.000000
-#> 6  0.00000 2.921790  0  0.6661411   0   1     2   1.905730
+#>        left    right  z        age hpv cyt cause      actual
+#> 1  0.000000 2.916200  0  0.5167249   1   0     2   0.6699919
+#> 2 24.322822      Inf  0 -0.4898768   0   1     3 147.5717649
+#> 3  0.000000 2.995239 NA  0.6841922   0   1     1   0.0000000
+#> 4  0.000000 3.063791  0  0.5575474   1   1     2   1.7127338
+#> 5  0.000000 3.109975  0 -0.6926260   0   0     2   0.3726588
+#> 6  2.937633 5.706490  0 -0.7476236   0   1     2   4.3717067
 sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -5.1200  0.1036 -5.3230 -4.9169
-#> g0 intercept   -1.5471  0.0540 -1.6530 -1.4413
-#> w0 intercept   -1.1748  0.0617 -1.2957 -1.0538
-#> p0 intercept    0.2488  0.0082  0.2327  0.2648
+#> h          h   -5.1045  0.1095 -5.3192 -4.8899
+#> g0 intercept   -1.6695  0.0537 -1.7748 -1.5643
+#> w0 intercept   -1.2949  0.0642 -1.4207 -1.1691
+#> p0 intercept    0.2469  0.0082  0.2309  0.2630
 sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
 
@@ -70,3 +78,13 @@ lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
 
 <img src="man/figures/README-example-1.png" width="50%" style="display: block; margin: auto;" />
+
+## Upcoming
+
+- update model predict functions to allow for model fits where the
+  general intercept was not estimated.
+- update Gamma simulator functions
+
+## Authors
+
+- **Kelsi Kroon** <k.kroon@amsterdamumc.nl>
