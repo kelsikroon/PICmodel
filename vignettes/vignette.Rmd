@@ -1,0 +1,101 @@
+---
+title: "`PICmodel`"
+subtitle: "An `R` Package for a Prevalence-Incidence-Cure (PIC) Model to interval-censored screening data from a population who have a temporary elevated risk at baseline"
+author: "Kelsi Kroon"
+header-includes:
+    - \usepackage{setspace}\onehalfspacing
+    - \usepackage{float}
+abstract:  >
+  We propose a biologically driven variant of the prevalent-incidence model proposed by Cheung et al. (2017). For incident disease our model assumes an underlying exponential competing-risk distribution combined with a time-invariant background risk. The use of the competing-risk assumption for incident CIN2+ is a biologically plausible solution for the problems outlined above since women without CIN2+ at baseline either progress to CIN2+ or clear the HPV infection. The background risk refers to CIN2+ cases that are not caused by the HPV infection at baseline. Including background risk in the model improves model accuracy when the follow-up time is long because after viral clearance, women are still at risk of acquiring a new HPV infection or reactivating a previous HPV infection. The model parameters can be interpreted as constant rates that are easy to interpret. Besides, their estimates can be used in Markov screening models that are used to estimate the health gains and harms of new screening algorithms over a woman’s screening lifetime.  
+    
+    Our model is developed with cervical cancer screening data in mind; however, it is also applicable in situations where a population has a strongly elevated disease risk at baseline, but the risk is only temporarily elevated. Other applications could include but are not limited to     
+     - H pylori causes increased risk for stomach cancer 	
+     - Hep B/C causes increased risk of liver cancer     
+     - EBV infection increases a person's risk of getting nasopharyngeal cancer (cancer of the area in the back of the nose) and certain types of fast-growing lymphomas such as Burkitt lymphoma
+     
+  However, for the purpose of this user guide, we will use the application cervical cancer screening data. 
+output: rmarkdown::html_vignette
+geometry: margin=1in
+vignette: >
+  %\VignetteIndexEntry{survmix Manual}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", message=F, warning=F,
+  tidy.opts = list(width.cutoff = 85), tidy = TRUE)
+```
+
+\newpage
+
+# Model 
+For women $i=1,\dots,n$ who have a temporary elevated risk at baseline, let $(L_i,R_i]$ be the interval when the disease of interest developed, where $L_i$ is the last time the $i^{th}$ woman was observed to have an elevated risk but without disease and $R_i$ is the first time that the disease is detected for the $i^{th}$ woman. We allow $R_i=\infty$ to include women who do not develop the disease during follow-up. Let $z_i$ be an indicator variable for prevalent disease at baseline ($z_i=1$ means that the disease was present at baseline), which, due to the nature of screening programs, is unknown for some women.
+
+We assume that the competing events, progression and clearance, follow an exponential distribution with progression and viral clearance rates $\lambda_1$ and $\lambda_2$ respectively. Then the cumulative risk of developing the disease of interest at time t among women with an elevated risk but without disease at baseline is given by $$G(t)=\alpha(1-\exp(-\beta t))$$ with $\alpha=\lambda_1/(\lambda_1+\lambda_2$) and $\beta=\lambda_1+\lambda_2$. The cumulative background risk of CIN2+ developing from a new HPV infection, H(t), is given by	$$H(t)=1-\exp(-ht)$$ where h is the background rate, which is included to account for the fact that a woman’s risk of CIN2+ does not become zero even if the baseline infection clears. Let $\pi$ be the probability of having CIN2+ at baseline. Then combining these three, the probability that progression to CIN2+ happens in $[0, t)$ is a mixture distribution given by $$P(X\le t)=\pi+(1-\pi)[G(t)+H(t)-G(t)H(t)]$$ where there are two mixtures with mixing proportions $\pi$ and $1-\pi$: (1) CIN2+ present at baseline (prevalent), and (2) CIN2+ develops after baseline (incident). Within the second mixture there are independent causes of CIN2+: (1) CIN2+ develops from an HPV infection at baseline, and (2) CIN2+ develops from a new HPV infection acquired after baseline (background risk).
+
+We allow the model to include baseline characteristics. In the cervical cancer screening setting, covariates of interest might include HPV genotypes, methylation results, screening history and HPV vaccination status. However, our model is not restricted to the number or definition of covariates. For the proportion of prevalent disease, $\pi$, we use a logistic regression model to include covariates: $$\text{logit} (\pi)= \phi_0+\phi_1 x_1 + \dots + \phi_m x_m$$
+
+For both $\lambda_1$ and $\lambda_2$, we use a log transformation to ensure that the estimates from the algorithm produce positive rate parameters.$$\log(\lambda_1) = \gamma_0+\gamma_1 x_1 + \dots +\gamma_k x_k$$ $$\log(\lambda_2 ) = \omega_0+ \omega_1 x_1 + \dots + \omega_p x_p.$$ This way we can interpret the coefficients as an odds ratio for prevalent disease, and for incident disease, the inverse of the two rate parameters gives the expected time from baseline to disease. 
+
+
+## Likelihood
+
+## Expectation step 
+
+## Maximisation step
+
+
+
+# Example 1: without covariates 
+
+## Data
+
+First we simulate a screening data set. The `model.simulator()` function works as follows:
+
+
+The `model.simulator()` function takes six parameters, described below:  
+
+|Parameter   | Description                                          |
+|------------|------------------------------------------------------|
+| `n`        | The number of women in the simulated data set        |  
+|`l1_x`      | A vector containing the names of covariates which are used for the progression rate parameter $(\lambda_1)$. Options are `age`, `hpv`, and `cytology`. |
+|`l2_x`      | A vector containing the names of covariates which are used for the clearance rate parameter $(\lambda_2)$. Options are `age`, `hpv`, and `cytology`. |    
+|`pi_x`      | A vector containing the names of covariates which are used for the prevalent proportion parameter $(\pi)$. Options are `age`, `hpv`, and `cytology`.       |
+|`params`    | Numerical vector of the parameter values to be used in the data simulation. The first value is background risk, then $\lambda_1$, $\lambda_2$, $\pi$. When a model with covariates are used the coefficients for each covariate follow the same order.                                                                               |
+|`show_prob` | A value representing the probability of a woman showing up for the screening visit. Defaults to 0.9.     |
+|`i`         | A value representing the interval between screening rounds (in years). Defaults to 5.                    |
+
+
+```{r sim}
+library(PICmodel)
+set.seed(2)
+sim.thetas <- c(-5, -1.6, -1.2, 0.25)
+sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+```
+
+Data is stored in a data frame with a row for each subject. The first and second columns of the data are the left and right intervals, corresponding to the last time the subject was seen without CIN2+ and the first time CIN2+ was detected, respectively. Following this we have an indicator variable, $z$, denoting whether disease was prevalent or incident or if disease status was unknown at baseline (shown with `NA`). Note that if disease status at baseline as unknown, then the left interval is fixed at zero since we have no additional information between baseline and the first time disease was detected. Furthermore, if disease was present at baseline, then both the left and right interval are set to zero.
+
+In practical settings, the detection time might not be exactly at baseline, but the user can predefine an cut-off, such as three months (90 days), and assign cases detected before that time point as prevalent disease. Lastly, if CIN2+ was not detected during follow-up, then the right interval is set to $\infty$ and the left interval is the date of their last screening visit. When cleaning their data, the user can decide whether to use other tests/ information, such as a normal (Pap 1) cytology result, as a surrogate for a CIN0/1 histology result. This usually leads to shorter screening intervals, since women are usually only referred for histology after an abnormal cytology result. In turn, this means that most intervals would start at baseline if Pap 1 test results are not used as the left interval. 
+
+## Model fitting 
+
+The `model.fit()` function takes the same 3 vectors containing the names of covariates used for the progression, 
+```{r fit1}
+sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit$summary # view model fit summary
+```
+
+The output contains seven parts. 
+
+|Output   | Description                                          |
+|------------|------------------------------------------------------|
+| `initial.values`        | A vector containing the initial values determined by several "short" runs of the EM algorithm (low convergence criteria), which are used to find the maximum likelihood estimates in the full EM algorithm.   |  
+|`theta.hat`      | A vector containing the maximum likelihood estimate for each of the parameter values. The first value, `h` is the estimate of the background risk. The values starting with `g` are the intercept (`g0`) and coefficients for $\lambda_1$, likewise the values starting with `w` are the intercept (`w0`) and coefficients for $\lambda_2$. Finally, the values starting with `p` are the intercept (`p0`) and coefficients for $\pi$. Note that these values are on the log-scale (except for `p0` when no baseline covariates are used for $\pi$), and so it is necessary to take the exponent to get the estimated value.  |
+|`num.iterations`      | The number of iterations the EM algorithm took to converge to the maximum likelihood estimate. Note, this does not include the iterations for finding the optimal set of initial values. |    
+|`log.likelihood`      | The value of the log-likelihood at the estimated parameter values. |
+|`hess`    | Hessian matrix; the matrix of second order partial deriviates. Can be used to calculate the standard deviation of parameters for confidence intervals.                                                                           |
+|`std.dev` | A vector with the standard deviation for each paramater, calculated by the square root of the diagonal of the inverse of the negative hessian matrix. |
+|`summary`         | A data frame with a row for each parameter and columns giving the maximum likelihood estimate, the standard deviation, along with the lower and upper 95% confidence intervals.                 |
