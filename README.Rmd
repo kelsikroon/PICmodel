@@ -9,14 +9,18 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "100%",
+  warning = FALSE, message = FALSE
 )
 ```
+
 
 # PICmodel
 
 <!-- badges: start -->
 <!-- badges: end -->
+
+An `R` package for fitting a prevalence-incidence-cure (PIC) model interval-censored screening data of a population with a temporarily elevated risk of disease. 
 
 The goal of PICmodel is to ...
 
@@ -29,11 +33,15 @@ You can install the development version of PICmodel from [GitHub](https://github
 devtools::install_github("kelsikroon/PICmodel")
 ```
 
-## Example
+## Examples
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r example}
+```{r example, messages=F, warning=F}
 library(PICmodel)
-## basic example code
+sim.thetas <- c(-5, -1.6, -1.2, 0.25)
+sim.dat <- model.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.85, interval=4, include.h=T)
+head(sim.dat)
+sim.fit <- model.fit(c(), c(), c(), sim.dat)
+sim.fit$summary
 ```
