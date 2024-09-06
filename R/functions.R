@@ -6,18 +6,30 @@
 #' @param pi_x A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data), can be blank
 #' @param data Data used to fit the model containing columns for each term in l1_x, l2_x and pi_x. The first three columns must be (1)
 #' left interval, (2) right interval and (3) z indicator for prevalent/incident disease.The data must contain observed prevalent and incident cases, however some cases may be unknown (`NA`).
-#' @param num.runs Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 30.
+#' @param short.runs Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 20
+#' @param short.iter Number of max iterations used in one run of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 10
 #' @param short.epsilon Convergence criteria used in the 'Short' EM algorithm to determine initial values. Defaults to 0.1.
 #' @param epsilon Convergence criteria for the change in log-likelihood value used for stopping the EM algorithm. Defaults to 1e-08.
 #' @param silent Indicator variable for whether to print out each iteration or not. Default value set to FALSE.
+#' @param init Option to supply initial values instead of starting from random values in the model fit procedure. Defaults to NULL.
+#' @param include.h Indicator variable for whether to include background risk in the model or not. Defaults to TRUE.
+#' @param two.step.h Indicator variable for whether to perform a two-step procedure to obtain initial values when background risk is included. Defaults to TRUE.
+#' @param fixed.h Option to supply a fixed value of background risk, in which case it is treated as fixed and not included in parameter estimation and summary statistics. Needs to be on the log scale, e.g., background risk of 0.01 will use $log(0.01) = 4.6$ as input. Defaults to NULL.
+#' @param include.priors Indicator variable for whether to incldue weakly informative Cauchy priors in the estimation procedure. Defaults to TRUE.
+#' @param intercept.prog Defaults to TRUE.
+#' @param intercept.clear Defaults to TRUE.
+#' @param intercept.prev Defaults to TRUE.
 #' @return The output is a list containing the following elements:
-#'   initial.values - initial values determined by the Short EM algorithm process
-#'   theta.hat - optimum parameter values estimated by the EM algorithm
-#'   num.iterations - number of iterations until the EM algorithm converged
-#'   log.likelihood - value of the log.likelihood at the optimum parameter values
-#'   hess - hessian matrix
-#'   std.dev - standard deviation of parameter estimates
-#'   summary - data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons)
+#'   - model: list containing names of covariates used for each parameter
+#'   - initial.values: either the initial values determined by the Short EM algorithm process or the supplied initial values
+#'   - fixed.h: the fixed value of background risk if supplied, otherwise NULL
+#'   - theta.hat: optimum parameter values estimated by the EM algorithm
+#'   - num.iterations: number of iterations until the EM algorithm converged
+#'   - log.likelihood: value of the log.likelihood at the maximum likelihood estimates
+#'   - hess: hessian matrix at the maximum likelihood estimates
+#'   - grad: value of the gradient vector at the the maximum likelihood estimates
+#'   - std.dev: standard deviation of parameter estimates
+#'   - summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons)
 #' @export
 model.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20,
                       silent=T,  init=NULL, include.h=T, two.step.h=T, include.priors=T, fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
