@@ -25,14 +25,17 @@ model.fit(
 )
 }
 \arguments{
-\item{l1_x}{A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data), can be blank}
+\item{l1_x}{A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Can be left blank for empty model.}
 
-\item{l2_x}{A vector containing the names of covariates used in the clearance rate parameter (must match column name(s) in the input data), can be blank}
+\item{l2_x}{A vector containing the names of covariates used in the clearance rate parameter (must match column name(s) in the input data). Can be left blank for empty model.}
 
-\item{pi_x}{A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data), can be blank}
+\item{pi_x}{A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Can be left blank for empty model.}
 
-\item{data}{Data used to fit the model containing columns for each term in l1_x, l2_x and pi_x. The first three columns must be (1)
-left interval, (2) right interval and (3) z indicator for prevalent/incident disease.The data must contain observed prevalent and incident cases, however some cases may be unknown (`NA`).}
+\item{data}{Data used to fit the model containing columns for each term in l1_x, l2_x and pi_x. The first three columns must be: \itemize{
+\item left interval giving the last time a patient was seen without the disease
+\item right interval giving the first time a patient was seen with the disease (can be Inf for right-censored cases)
+\item z indicator for prevalent/incident disease. The data must contain observed prevalent (z=1) and incident (z=0) cases, however some cases may be set to unknown (i.e., z=`NA`) for instance if there were no visits between baseline and disease detection.
+}}
 
 \item{epsilon}{Convergence criteria for the change in log-likelihood value used for stopping the EM algorithm. Defaults to 1e-08.}
 
@@ -50,15 +53,15 @@ left interval, (2) right interval and (3) z indicator for prevalent/incident dis
 
 \item{two.step.h}{Indicator variable for whether to perform a two-step procedure to obtain initial values when background risk is included. Defaults to TRUE.}
 
-\item{include.priors}{Indicator variable for whether to incldue weakly informative Cauchy priors in the estimation procedure. Defaults to TRUE.}
+\item{include.priors}{Indicator variable for whether to include weakly informative Cauchy priors in the estimation procedure. Defaults to TRUE.}
 
 \item{fixed.h}{Option to supply a fixed value of background risk, in which case it is treated as fixed and not included in parameter estimation and summary statistics. Needs to be on the log scale, e.g., background risk of 0.01 will use $log(0.01) = 4.6$ as input. Defaults to NULL.}
 
-\item{intercept.prog}{Defaults to TRUE.}
+\item{intercept.prog}{Indicator variable for whether a general intercept is estimated for the progression parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.}
 
-\item{intercept.clear}{Defaults to TRUE.}
+\item{intercept.clear}{Indicator variable for whether a general intercept is estimated for the clearance parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.}
 
-\item{intercept.prev}{Defaults to TRUE.}
+\item{intercept.prev}{Indicator variable for whether a general intercept is estimated for the prevalence parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.}
 }
 \value{
 The output is a list containing the following elements:
@@ -78,4 +81,7 @@ The output is a list containing the following elements:
 \description{
 This function fits our Prevalence-Incidence-Cure (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
 It is possible for the user to select the covariates that will be used for each parameter.
+}
+\author{
+Kelsi Kroon, Hans Bogaards, Hans Berkhof
 }

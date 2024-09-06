@@ -17,6 +17,7 @@ NULL
 #' @param interval A value representing the interval between screening rounds (in years). Defaults to 3.
 #' @param include.h Indicator variable for whether to background risk in the simulation procedure. Defaults to TRUE.
 #' @return A data frame containing the left and right interval of CIN2+ detection, the indicator of prevalent disease, age (continuous), HPV genotype (HPV16 or other, 1=HPV16), and cytology result (normal or abnormal, 1=abnormal).
+#' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
 #loosely based on cervical cancer data
 screening.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T){

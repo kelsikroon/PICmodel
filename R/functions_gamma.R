@@ -6,8 +6,9 @@
 #' @param k Shape parameter for gamma distribution
 #' @param interval Screening interval (in years). Defaults to 3.
 #' @param include.h Indicator variable for whether to include background risk or not. Defaults to TRUE.
+#' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-gamma.simulator <- function(n, params,  k, interval=3, include.h=T){
+simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
   show_prob <- 0.8
   h <- exp(params[1])
   l1 <- exp(params[2])
@@ -75,10 +76,10 @@ gamma.simulator <- function(n, params,  k, interval=3, include.h=T){
 #'
 #' Function to compute p-value of the score test given model fit, step size (dh), order (accuracy, 1, 2 or 4) and data.
 #'
-#' @param fit
-#' @param fit
-#' @param fit
-#' @param fit
+#' @param fit Output from model fit.
+#' @param dh Step size used in numerical differentiation (e.g., 1e-5, 1e-10)
+#' @param accuracy Order of accuracy in numerical differentiation, options are 1, 2, or 4.
+#' @param data Data used to fit the model.
 #' @return  The output is a list containing the following elements:
 #' \itemize{
 #' \item grad: value of the gradient at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
@@ -87,8 +88,9 @@ gamma.simulator <- function(n, params,  k, interval=3, include.h=T){
 #' \item loglik: value of the log-likelihood at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
 #' \item p.val: p-value of the score test for whether Cause 1 follows a Gamma rather than Exponential distribution (tests whether shape parameter equals 1 or not).
 #' }
+#' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-gamma.score.test <- function(fit, dh, accuracy, data){
+score.test.gamma <- function(fit, dh, accuracy, data){
   #require("stringr")
   fixed.h <- fit$fixed.h
   n <- length(data$right)

@@ -1,4 +1,4 @@
-#' Model Predictions
+#' Make predictions from the prevalence-incidence-cure model
 #' @param l1_x A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter (must match column name(s) in the input data)
 #' @param l2_x A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter (must match column name(s) in the input data)
 #' @param pi_x A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease) (must match column name(s) in the input data)
@@ -9,6 +9,7 @@
 #' @param include.h Indicator variable for whether background risk was included in the model fitting procedure. Defaults to TRUE
 #' @return The output is a list for each unique combination of covariates used in the model containing the time points, the cumulative risk estimate along with the upper and lower 95% confidence intervals.
 #'
+#' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
 model.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F, include.h=T){
   g <- function(l1, l2, t){

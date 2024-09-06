@@ -4,11 +4,14 @@
 #' This function fits our Prevalence-Incidence-Cure (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
 #' It is possible for the user to select the covariates that will be used for each parameter.
 #'
-#' @param l1_x A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data), can be blank
-#' @param l2_x A vector containing the names of covariates used in the clearance rate parameter (must match column name(s) in the input data), can be blank
-#' @param pi_x A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data), can be blank
-#' @param data Data used to fit the model containing columns for each term in l1_x, l2_x and pi_x. The first three columns must be (1)
-#' left interval, (2) right interval and (3) z indicator for prevalent/incident disease.The data must contain observed prevalent and incident cases, however some cases may be unknown (`NA`).
+#' @param l1_x A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Can be left blank for empty model.
+#' @param l2_x A vector containing the names of covariates used in the clearance rate parameter (must match column name(s) in the input data). Can be left blank for empty model.
+#' @param pi_x A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Can be left blank for empty model.
+#' @param data Data used to fit the model containing columns for each term in l1_x, l2_x and pi_x. The first three columns must be: \itemize{
+#' \item left interval giving the last time a patient was seen without the disease
+#' \item right interval giving the first time a patient was seen with the disease (can be Inf for right-censored cases)
+#' \item z indicator for prevalent/incident disease. The data must contain observed prevalent (z=1) and incident (z=0) cases, however some cases may be set to unknown (i.e., z=`NA`) for instance if there were no visits between baseline and disease detection.
+#' }
 #' @param short.runs Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 20
 #' @param short.iter Number of max iterations used in one run of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 10
 #' @param short.epsilon Convergence criteria used in the 'Short' EM algorithm to determine initial values. Defaults to 0.1.
@@ -18,10 +21,10 @@
 #' @param include.h Indicator variable for whether to include background risk in the model or not. Defaults to TRUE.
 #' @param two.step.h Indicator variable for whether to perform a two-step procedure to obtain initial values when background risk is included. Defaults to TRUE.
 #' @param fixed.h Option to supply a fixed value of background risk, in which case it is treated as fixed and not included in parameter estimation and summary statistics. Needs to be on the log scale, e.g., background risk of 0.01 will use $log(0.01) = 4.6$ as input. Defaults to NULL.
-#' @param include.priors Indicator variable for whether to incldue weakly informative Cauchy priors in the estimation procedure. Defaults to TRUE.
-#' @param intercept.prog Defaults to TRUE.
-#' @param intercept.clear Defaults to TRUE.
-#' @param intercept.prev Defaults to TRUE.
+#' @param include.priors Indicator variable for whether to include weakly informative Cauchy priors in the estimation procedure. Defaults to TRUE.
+#' @param intercept.prog Indicator variable for whether a general intercept is estimated for the progression parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.
+#' @param intercept.clear Indicator variable for whether a general intercept is estimated for the clearance parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.
+#' @param intercept.prev Indicator variable for whether a general intercept is estimated for the prevalence parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.
 #' @return The output is a list containing the following elements:
 #' \itemize{
 #' \item model: list containing names of covariates used for each parameter
@@ -35,6 +38,7 @@
 #' \item std.dev: standard deviation of parameter estimates
 #' \item summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons)
 #' }
+#' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
 model.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20,
                       silent=T,  init=NULL, include.h=T, two.step.h=T, include.priors=T, fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
