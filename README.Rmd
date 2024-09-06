@@ -68,8 +68,7 @@ lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ## Upcoming 
 
 - update model predict functions to allow for model fits where the general intercept was not estimated. 
-- update Gamma simulator functions 
-
+- update Gamma simulator functions to allow for covariates 
 
 ## Authors
 
