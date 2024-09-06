@@ -29,20 +29,28 @@ This is a basic example which shows you how to solve a common problem:
 ``` r
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
-sim.dat <- model.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.85, interval=4, include.h=T)
+sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat)
-#>        left    right z        age hpv cyt cause      actual
-#> 1 23.995091      Inf 0 -0.5468160   0   0     3 124.6424110
-#> 2  0.000000 4.454868 0 -0.2464823   1   1     2   0.4868971
-#> 3  0.000000 0.000000 1 -0.8121822   0   1     1   0.0000000
-#> 4  3.899314 7.833621 0 -0.5162974   0   1     2   4.1474681
-#> 5 23.956266      Inf 0  0.8440549   1   0     3 111.5725378
-#> 6 23.968028      Inf 0 -0.1025649   0   0     3 168.3403445
+#>       left    right  z        age hpv cyt cause    actual
+#> 1 0.000000 0.000000  1  0.3715747   1   0     1 0.0000000
+#> 2 0.000000 0.000000  1  0.5315498   0   0     1 0.0000000
+#> 3 0.000000 3.084584 NA -0.5111330   0   0     2 0.2785294
+#> 4 2.718008 6.431231  0  0.7860201   1   1     2 3.5292963
+#> 5 0.000000 3.011932  0 -0.8007818   0   0     2 0.8103534
+#> 6 2.958886 9.222339  0 -0.3186591   1   1     2 4.1959996
 sim.fit <- model.fit(c(), c(), c(), sim.dat)
 sim.fit$summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -4.9736  0.1832 -5.3326 -4.6145
-#> g0 intercept   -1.5040  0.1141 -1.7276 -1.2803
-#> w0 intercept   -1.1706  0.1385 -1.4420 -0.8991
-#> p0 intercept    0.2547  0.0147  0.2259  0.2835
+#> h          h   -5.0545  0.1051 -5.2605 -4.8485
+#> g0 intercept   -1.5275  0.0526 -1.6306 -1.4244
+#> w0 intercept   -1.2276  0.0624 -1.3499 -1.1053
+#> p0 intercept    0.2516  0.0082  0.2355  0.2676
+
+library(survival)
+sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
+sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
+plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0, 0.6))
+lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
+
+<img src="man/figures/README-example-1.png" width="50%" style="display: block; margin: auto;" />

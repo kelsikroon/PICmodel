@@ -37,11 +37,17 @@ devtools::install_github("kelsikroon/PICmodel")
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r example, messages=F, warning=F}
+```{r example, messages=F, warning=F, out.width='50%',fig.align='center'}
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
-sim.dat <- model.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.85, interval=4, include.h=T)
+sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat)
 sim.fit <- model.fit(c(), c(), c(), sim.dat)
 sim.fit$summary
+
+library(survival)
+sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
+sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
+plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0, 0.6))
+lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
