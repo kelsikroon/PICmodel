@@ -54,21 +54,21 @@ library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
 sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
-#>        left     right z         age hpv cyt cause      actual
-#> 1  0.000000  3.074941 0  0.45426348   0   1     2   0.7563091
-#> 2 21.478817       Inf 0  0.05031404   0   0     3 289.3111532
-#> 3 15.135433 18.035708 0 -0.10967443   1   0     3  17.4553861
-#> 4  0.000000  0.000000 1 -0.74145970   1   0     1   0.0000000
-#> 5 24.252250       Inf 0  0.38333888   0   1     3 156.2429218
-#> 6  3.205326  6.085531 0 -0.73455753   0   1     3   3.5586823
+#>        left    right z      age    age.std hpv cyt cause      actual
+#> 1  0.000000 3.307372 0 30.79577 -0.8191893   0   0     2   0.8789059
+#> 2 24.125708      Inf 0 59.84236  0.4445814   0   0     3 588.8258836
+#> 3  0.000000 3.195702 0 33.64968 -0.6950203   0   0     2   0.3646629
+#> 4 23.861327      Inf 0 41.19456 -0.3667547   1   0     3  38.9862333
+#> 5  2.838286 6.351851 0 58.96564  0.4064367   1   0     2   3.1132863
+#> 6  0.000000 0.000000 1 36.43077 -0.5740195   1   1     1   0.0000000
 
 sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -5.0110  0.1005 -5.2080 -4.8140
-#> g0 intercept   -1.6045  0.0551 -1.7125 -1.4965
-#> w0 intercept   -1.1954  0.0657 -1.3242 -1.0667
-#> p0 intercept    0.2366  0.0080  0.2209  0.2522
+#> h          h   -5.1005  0.1009 -5.2983 -4.9028
+#> g0 intercept   -1.5490  0.0553 -1.6574 -1.4406
+#> w0 intercept   -1.1106  0.0628 -1.2337 -0.9875
+#> p0 intercept    0.2528  0.0082  0.2367  0.2689
 
 sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
@@ -92,28 +92,28 @@ as a covariate for prevalence then we would d the following:
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
 sim.dat2 <- model.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
-#>        left    right z         age hpv cyt cause       actual
-#> 1  0.000000 2.281524 0 -0.79772096   1   0     2   0.01496776
-#> 2 23.800212      Inf 0 -0.07217131   0   0     3 214.47557107
-#> 3  0.000000 2.848615 0  0.22694546   1   0     2   0.45547903
-#> 4  0.000000 0.000000 1 -0.09881209   0   1     1   0.00000000
-#> 5 24.170790      Inf 0 -0.76690276   1   1     3  32.01835181
-#> 6  2.678984 6.805850 0  0.23722053   1   0     3   3.14729871
+#>       left    right z      age    age.std hpv cyt cause       actual
+#> 1  0.00000 3.032322 0 60.73083  0.4781152   1   0     2   0.09349551
+#> 2 24.18070      Inf 0 32.76657 -0.7327870   0   0     3 130.23374620
+#> 3  0.00000 0.000000 1 63.47095  0.5967670   0   1     1   0.00000000
+#> 4 23.94109      Inf 0 45.29004 -0.1904987   0   0     3 177.88445660
+#> 5 21.29337      Inf 0 55.49882  0.2515597   0   1     3  88.17857980
+#> 6  0.00000 0.000000 1 68.20954  0.8019566   0   0     1   0.00000000
 
 sim.fit2 <- model.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
 sim.fit2$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -5.0013  0.0834 -5.1648 -4.8379
-#> g0 intercept   -1.6364  0.0513 -1.7370 -1.5359
-#> g1       hpv    0.9762  0.0676  0.8437  1.1087
-#> w0 intercept   -1.1670  0.0530 -1.2709 -1.0632
-#> p0 intercept   -2.9681  0.0891 -3.1427 -2.7934
-#> p1       cyt    3.9686  0.1029  3.7669  4.1702
+#> h          h   -4.9110  0.0827 -5.0731 -4.7489
+#> g0 intercept   -1.6187  0.0478 -1.7124 -1.5251
+#> g1       hpv    0.9499  0.0665  0.8195  1.0802
+#> w0 intercept   -1.2700  0.0510 -1.3699 -1.1700
+#> p0 intercept   -3.0586  0.0932 -3.2412 -2.8759
+#> p1       cyt    3.9981  0.1061  3.7901  4.2061
 
 sim.predict2 <- model.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)
 
-library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
+# compare model fit to non-parametric Kaplan-Meier curve 
 sim.km.fit1 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==1 & sim.dat2$cyt==1,])
 sim.km.fit2 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==1 & sim.dat2$cyt==0,])
 sim.km.fit3 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==0 & sim.dat2$cyt==1,])

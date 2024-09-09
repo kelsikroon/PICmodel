@@ -78,7 +78,7 @@ sim.fit2$summary # view model fit summary
 sim.predict2 <- model.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)
 
-library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
+# compare model fit to non-parametric Kaplan-Meier curve 
 sim.km.fit1 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==1 & sim.dat2$cyt==1,])
 sim.km.fit2 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==1 & sim.dat2$cyt==0,])
 sim.km.fit3 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==0 & sim.dat2$cyt==1,])
