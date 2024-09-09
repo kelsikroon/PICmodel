@@ -22,7 +22,7 @@ NULL
 #loosely based on cervical cancer data
 model.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T){
   age <- runif(n, 30, 70)
-  age <- 0.5*(age - mean(age))/sd(age)
+  age.std <- 0.5*(age - mean(age))/sd(age)
 
   # Cytology Results: this is an indicator variable so 1 means abnormal cytology and 0 means not abnormal (or unknown for z=NA)
   # if they did not show up for screening at time 0 then their cytology result is 0 because it is unknown
@@ -127,5 +127,5 @@ model.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interv
   # rounds were NA (very rare, this is just to avoid errors in case it happens)
   right[is.na(right)] <- Inf
 
-  return(data.frame(left, right, z = z, age = age, hpv = hpv, cyt=cytology, cause=cause, actual=t))
+  return(data.frame(left, right, z = z, age = age, age.std = age.std, hpv = hpv, cyt=cytology, cause=cause, actual=t))
 }

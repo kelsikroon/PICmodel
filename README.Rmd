@@ -35,7 +35,7 @@ There are five main functions in this package:
 
 ## Installation
 
-You can install the development version of PICmodel from [GitHub](https://github.com/) with:
+You can install the most recent version of `PICmodel` from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
@@ -44,17 +44,18 @@ devtools::install_github("kelsikroon/PICmodel")
 
 ## Examples
 
-This is a basic example which shows you how to solve a common problem:
+This is a basic example in a setting without covariates which illustrates how to simulate data, fit the model, make predictions from the plot and compare to a non-parametric cumulative incidence curve:
 
 ```{r example, messages=F, warning=F, out.width='50%',fig.align='center'}
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
 sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
+
 sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
-sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
+sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
 library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
 sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
@@ -64,6 +65,45 @@ plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR
 lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
 
+To add covariates to the model we specify them separately for the progression, clearance, and prevalence parameters. For example if we wanted to add HPV16 as a covariate for progression and abnormal cytology as a covariate for prevalence then we would d the following: 
+```{r example2, messages=F, warning=F, out.width='50%',fig.align='center'}
+
+sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
+sim.dat2 <- model.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
+head(sim.dat2) # view simulated data
+
+sim.fit2 <- model.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
+sim.fit2$summary # view model fit summary
+
+sim.predict2 <- model.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
+                              time.points = seq(0, 15, 0.5), fit=sim.fit2)
+
+library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
+sim.km.fit1 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==1 & sim.dat2$cyt==1,])
+sim.km.fit2 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==1 & sim.dat2$cyt==0,])
+sim.km.fit3 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==0 & sim.dat2$cyt==1,])
+sim.km.fit4 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[sim.dat2$hpv==0 & sim.dat2$cyt==0,])
+
+```
+
+```{r example3, messages=F, warning=F, results='hold', fig.show='hold'}
+# plot PICmodel predictions and KM-curve to compare 
+plot(sim.predict2[[1]]$Time, sim.predict2[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0,1), col='darkblue')
+lines(sim.km.fit1$time, 1-sim.km.fit1$surv, col='lightblue', lty=2)
+
+lines(sim.predict2[[2]]$Time, sim.predict2[[2]]$CR, col = 'darkgreen')
+lines(sim.km.fit2$time, 1-sim.km.fit2$surv, col='darkolivegreen1', lty=2)
+
+lines(sim.predict2[[3]]$Time, sim.predict2[[3]]$CR,col='deeppink2')
+lines(sim.km.fit3$time, 1-sim.km.fit3$surv, col='pink1', lty=2)
+
+lines(sim.predict2[[4]]$Time, sim.predict2[[4]]$CR, col='darkorange3')
+lines(sim.km.fit4$time, 1-sim.km.fit4$surv, col='orange1', lty=2)
+
+legend("bottomright",
+         legend=c("HPV16-pos & abnormal cyt", "HPV16-pos & normal cyt", "HPV16-neg & abnormal cyt", "HPV16-neg & normal cyt"),
+         col=c("darkblue", "darkgreen", "deeppink2", "darkorange3"), lty=1, lwd=2, bty = "n", cex=0.75)
+```
 
 ## Upcoming 
 
