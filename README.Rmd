@@ -86,7 +86,7 @@ sim.km.fit4 <- survfit(Surv(left, right, type='interval2')~1, data = sim.dat2[si
 
 ```
 
-```{r example3, messages=F, warning=F, results='hold', fig.show='hold'}
+```{r example3, messages=F, warning=F, out.width='50%', results='hold', fig.show='hold'}
 # plot PICmodel predictions and KM-curve to compare 
 plot(sim.predict2[[1]]$Time, sim.predict2[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0,1), col='darkblue')
 lines(sim.km.fit1$time, 1-sim.km.fit1$surv, col='lightblue', lty=2)
