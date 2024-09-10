@@ -11,7 +11,7 @@
 #'
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-model.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F, include.h=T){
+PICmodel.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F, include.h=T){
   g <- function(l1, l2, t){
     return(l1 / (l1 + l2) * (1 - exp(-(l1 + l2)* t)))
   }

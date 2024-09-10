@@ -20,7 +20,7 @@ NULL
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
 #loosely based on cervical cancer data
-model.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T){
+PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T){
   age <- runif(n, 30, 70)
   age.std <- 0.5*(age - mean(age))/sd(age)
 
