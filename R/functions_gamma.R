@@ -1,3 +1,5 @@
+#' @importFrom stringr str_detect
+#'
 #' Gamma Simulator
 #'
 #' Function to simulate data for a variant of our model that uses the Gamma distribution for Cause 1 (i.e., progression) in the competing risks framework used for incident disease. Note this code is simplified to not include covariates
