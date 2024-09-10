@@ -1,24 +1,15 @@
 ---
-title: "`PICmodel`"
-subtitle: "An `R` Package for a Prevalence-Incidence-Cure (PIC) Model to interval-censored screening data from a population who have a temporary elevated risk at baseline"
+title: "Introduction to *PICmodel*"
+subtitle: "An `R` Package to fit Prevalence-Incidence-Cure (PIC) models to interval-censored screening data from a population with a temporary elevated risk at baseline"
 author: "Kelsi Kroon"
 header-includes:
     - \usepackage{setspace}\onehalfspacing
     - \usepackage{float}
-abstract:  >
-  We propose a biologically driven variant of the prevalent-incidence model proposed by Cheung et al. (2017). For incident disease our model assumes an underlying exponential competing-risk distribution combined with a time-invariant background risk. The use of the competing-risk assumption for incident CIN2+ is a biologically plausible solution for the problems outlined above since women without CIN2+ at baseline either progress to CIN2+ or clear the HPV infection. The background risk refers to CIN2+ cases that are not caused by the HPV infection at baseline. Including background risk in the model improves model accuracy when the follow-up time is long because after viral clearance, women are still at risk of acquiring a new HPV infection or reactivating a previous HPV infection. The model parameters can be interpreted as constant rates that are easy to interpret. Besides, their estimates can be used in Markov screening models that are used to estimate the health gains and harms of new screening algorithms over a woman’s screening lifetime.  
-    
-    Our model is developed with cervical cancer screening data in mind; however, it is also applicable in situations where a population has a strongly elevated disease risk at baseline, but the risk is only temporarily elevated. Other applications could include but are not limited to     
-     - H pylori causes increased risk for stomach cancer 	
-     - Hep B/C causes increased risk of liver cancer     
-     - EBV infection increases a person's risk of getting nasopharyngeal cancer (cancer of the area in the back of the nose) and certain types of fast-growing lymphomas such as Burkitt lymphoma
-     
-  However, for the purpose of this user guide, we will use the application cervical cancer screening data. 
 output: rmarkdown::html_vignette
 geometry: margin=1in
 vignette: >
-  %\VignetteIndexEntry{survmix Manual}
-  %\VignetteEngine{knitr::knitr}
+  %\VignetteIndexEntry{PICmodel Manual}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -29,16 +20,13 @@ knitr::opts_chunk$set(
   tidy.opts = list(width.cutoff = 85), tidy = TRUE)
 ```
 
-\newpage
+
+# Introduction 
+
+We propose a biologically driven variant of the prevalent-incidence model proposed by Cheung et al. (2017). For incident disease our model assumes an underlying exponential competing-risk distribution combined with a time-invariant background risk. The use of the competing-risk assumption for incident CIN2+ is a biologically plausible solution for the problems outlined above since women without CIN2+ at baseline either progress to CIN2+ or clear the HPV infection. The background risk refers to CIN2+ cases that are not caused by the HPV infection at baseline. Including background risk in the model improves model accuracy when the follow-up time is long because after viral clearance, women are still at risk of acquiring a new HPV infection or reactivating a previous HPV infection. The model parameters can be interpreted as constant rates that are easy to interpret. Besides, their estimates can be used in Markov screening models that are used to estimate the health gains and harms of new screening algorithms over a woman’s screening lifetime.Our model is developed with cervical cancer screening data in mind; however, it is also applicable in situations where a population has a strongly elevated disease risk at baseline, but the risk is only temporarily elevated.
 
 # Model 
-For women $i=1,\dots,n$ who have a temporary elevated risk at baseline, let $(L_i,R_i]$ be the interval when the disease of interest developed, where $L_i$ is the last time the $i^{th}$ woman was observed to have an elevated risk but without disease and $R_i$ is the first time that the disease is detected for the $i^{th}$ woman. We allow $R_i=\infty$ to include women who do not develop the disease during follow-up. Let $z_i$ be an indicator variable for prevalent disease at baseline ($z_i=1$ means that the disease was present at baseline), which, due to the nature of screening programs, is unknown for some women.
 
-We assume that the competing events, progression and clearance, follow an exponential distribution with progression and viral clearance rates $\lambda_1$ and $\lambda_2$ respectively. Then the cumulative risk of developing the disease of interest at time t among women with an elevated risk but without disease at baseline is given by $$G(t)=\alpha(1-\exp(-\beta t))$$ with $\alpha=\lambda_1/(\lambda_1+\lambda_2$) and $\beta=\lambda_1+\lambda_2$. The cumulative background risk of CIN2+ developing from a new HPV infection, H(t), is given by	$$H(t)=1-\exp(-ht)$$ where h is the background rate, which is included to account for the fact that a woman’s risk of CIN2+ does not become zero even if the baseline infection clears. Let $\pi$ be the probability of having CIN2+ at baseline. Then combining these three, the probability that progression to CIN2+ happens in $[0, t)$ is a mixture distribution given by $$P(X\le t)=\pi+(1-\pi)[G(t)+H(t)-G(t)H(t)]$$ where there are two mixtures with mixing proportions $\pi$ and $1-\pi$: (1) CIN2+ present at baseline (prevalent), and (2) CIN2+ develops after baseline (incident). Within the second mixture there are independent causes of CIN2+: (1) CIN2+ develops from an HPV infection at baseline, and (2) CIN2+ develops from a new HPV infection acquired after baseline (background risk).
-
-We allow the model to include baseline characteristics. In the cervical cancer screening setting, covariates of interest might include HPV genotypes, methylation results, screening history and HPV vaccination status. However, our model is not restricted to the number or definition of covariates. For the proportion of prevalent disease, $\pi$, we use a logistic regression model to include covariates: $$\text{logit} (\pi)= \phi_0+\phi_1 x_1 + \dots + \phi_m x_m$$
-
-For both $\lambda_1$ and $\lambda_2$, we use a log transformation to ensure that the estimates from the algorithm produce positive rate parameters.$$\log(\lambda_1) = \gamma_0+\gamma_1 x_1 + \dots +\gamma_k x_k$$ $$\log(\lambda_2 ) = \omega_0+ \omega_1 x_1 + \dots + \omega_p x_p.$$ This way we can interpret the coefficients as an odds ratio for prevalent disease, and for incident disease, the inverse of the two rate parameters gives the expected time from baseline to disease. 
 
 
 ## Likelihood
