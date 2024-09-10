@@ -1,5 +1,3 @@
-#' @importFrom stringr str_detect
-#'
 #' Gamma Simulator
 #'
 #' Function to simulate data for a variant of our model that uses the Gamma distribution for Cause 1 (i.e., progression) in the competing risks framework used for incident disease. Note this code is simplified to not include covariates
@@ -93,7 +91,7 @@ simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
 score.test.gamma <- function(fit, dh, accuracy, data){
-  #require("stringr")
+  require("stringr")
   fixed.h <- fit$fixed.h
   n <- length(data$right)
 
