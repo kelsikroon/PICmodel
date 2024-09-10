@@ -1,0 +1,18 @@
+#' Simulated cervical cancer screening data
+#'
+#' A simulated screening data set of 3000 HPV-positive women loosely based on real cervical cancer screening data sets.
+#'
+#' @format ## `sim.dat`
+#' A data frame with 3,000 rows and 9 columns:
+#' \describe{
+#'   \item{left}{Left interval of disease detection gives the last time that the patient was seen disease-free.}
+#'   \item{right}{Right interval of disease detection gives the first time the patient was seen with disease. Right interval is infinity when disease never developed.}
+#'   \item{z}{Indicator variable for whether disease was prevalent (1) or not (0). `NA` indicates that it is unknown whether disease was prevalent because there weren't any visits in the time between baseline and disease detection.}
+#'   \item{age}{Age at baseline (time = 0) in the simulated screening study.}
+#'   \item{age.std}{Age standardised to have mean 0 and standard deviation of 0.5.}
+#'   \item{hpv}{Indicator variable for HPV16 genotype: 1 means HPV16-pos, 0 means HPV16-negative.}
+#'   \item{cyt}{Indicator variable for abnormal cytology (i.e., > Pap 2): 1 means abnormal cytology, 0 means normal cytology.}
+#'   \item{cause}{Cause of disease development, e.g., prevalent, early or late event. Never used in model fitting since this is unknown in read data but useful to know.}
+#'   \item{actual}{Actual time of disease development as simulated by the model. Never used in model fitting since this is unknown in real data but interesting to see along with the left and right intervals.}
+#' }
+"sim.dat"
