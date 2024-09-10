@@ -82,6 +82,10 @@ The output is a list containing the following elements:
 This function fits our Prevalence-Incidence-Cure (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
 It is possible for the user to select the covariates that will be used for each parameter.
 }
+\examples{
+fit <- PICmodel.fit(c(), c(), c(), sim.dat)
+fit$summary
+}
 \author{
 Kelsi Kroon, Hans Bogaards, Hans Berkhof
 }

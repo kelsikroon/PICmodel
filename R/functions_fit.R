@@ -40,6 +40,10 @@
 #' }
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
+#'
+#' @examples
+#' fit <- PICmodel.fit(c(), c(), c(), sim.dat)
+#' fit$summary
 PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20,
                       silent=T,  init=NULL, include.h=T, two.step.h=T, include.priors=T, fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
   if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
