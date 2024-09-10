@@ -5,8 +5,8 @@ NULL
 
 #' Screening data simulator
 #'
-#' Simulates screening data with user-specified parameters based on the example of cervical cancer screening data. Useful for validating that the model is able to recover the true parameter values. Currently it is only possible to simulate
-#' data with the baseline covariates age (continuous between 3- and 70), HPV genotype (HPV16 positive or negative), and cytology (normal/ abnormal).
+#' Simulates screening data with user-specified parameters loosely based on the example of cervical cancer screening data. Useful for validating that the model is able to recover the true parameter values. Currently it is only possible to simulate
+#' data with the baseline covariates age (continuous between 30 and 70), HPV genotype (HPV16 positive or negative), and cytology (normal/ abnormal).
 #'
 #' @param n Number of women in the simulated data set.
 #' @param l1_x A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter. Options are "age", "HPV16" and "cytology".
@@ -19,7 +19,9 @@ NULL
 #' @return A data frame containing the left and right interval of CIN2+ detection, the indicator of prevalent disease, age (continuous), HPV genotype (HPV16 or other, 1=HPV16), and cytology result (normal or abnormal, 1=abnormal).
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-#loosely based on cervical cancer data
+#' @examples
+#' sim.df <- PICmodel.simulator(1000, c("hpv"), c(), c(),  c(-5, -1.6, 1, -1.2, 0.25), show_prob = 0.9, interval=3, include.h=T)
+#' head(sim.df)
 PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T){
   age <- runif(n, 30, 70)
   age.std <- 0.5*(age - mean(age))/sd(age)
