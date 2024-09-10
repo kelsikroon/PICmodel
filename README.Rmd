@@ -26,9 +26,9 @@ In longitudinal screening studies it is possible to observe prevalent, early or 
 
 There are five main functions in this package: 
 
-- `model.fit`: fits our Prevalence-Incidence-Cure model
-- `model.predict`: makes predictions from the model
-- `model.simulator`: simulates data under user-specified parameter values and covariates
+- `PICmodel.fit`: fits our Prevalence-Incidence-Cure model
+- `PICmodel.predict`: makes predictions from the model
+- `PICmodel.simulator`: simulates data under user-specified parameter values and covariates
 - `score.test.gamma`: performs a score test whether the shape parameter of the Gamma distribution for progression is equal to one or not. 
 - `simulator.gamma`: simulates data where progression follows a Gamma rather than exponential distribution and so can have a shape parameter not equal to one. Does not allow for covariates, yet. 
 
@@ -49,13 +49,13 @@ This is a basic example in a setting without covariates which illustrates how to
 ```{r example, messages=F, warning=F, out.width='50%',fig.align='center'}
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
-sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+sim.dat <- PICmodel.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
 
-sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 
-sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
+sim.predict <- PICmodel.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
 library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
 sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
@@ -69,13 +69,13 @@ To add covariates to the model we specify them separately for the progression, c
 ```{r example2, messages=F, warning=F, out.width='50%',fig.align='center'}
 
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
-sim.dat2 <- model.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
+sim.dat2 <- PICmodel.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
 
-sim.fit2 <- model.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
+sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
 sim.fit2$summary # view model fit summary
 
-sim.predict2 <- model.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
+sim.predict2 <- PICmodel.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)
 
 # compare model fit to non-parametric Kaplan-Meier curve 

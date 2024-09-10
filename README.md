@@ -23,9 +23,9 @@ paper: *eventual link to paper*.
 
 There are five main functions in this package:
 
-- `model.fit`: fits our Prevalence-Incidence-Cure model
-- `model.predict`: makes predictions from the model
-- `model.simulator`: simulates data under user-specified parameter
+- `PICmodel.fit`: fits our Prevalence-Incidence-Cure model
+- `PICmodel.predict`: makes predictions from the model
+- `PICmodel.simulator`: simulates data under user-specified parameter
   values and covariates
 - `score.test.gamma`: performs a score test whether the shape parameter
   of the Gamma distribution for progression is equal to one or not.
@@ -52,25 +52,25 @@ the plot and compare to a non-parametric cumulative incidence curve:
 ``` r
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
-sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+sim.dat <- PICmodel.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
-#>      left     right  z      age    age.std hpv cyt cause    actual
-#> 1  0.0000  2.936714 NA 41.79124 -0.3602243   0   0     3  2.138136
-#> 2 21.0141 24.064706  0 44.72637 -0.2331472   1   0     3 22.359147
-#> 3  0.0000  0.000000  1 46.90608 -0.1387764   1   0     1  0.000000
-#> 4  0.0000  3.167310 NA 64.06899  0.6042943   0   0     1  0.000000
-#> 5  0.0000  0.000000  1 54.68161  0.1978662   0   0     1  0.000000
-#> 6  0.0000  2.971963  0 46.33303 -0.1635869   0   0     2  1.005333
+#>       left    right z      age     age.std hpv cyt cause     actual
+#> 1 24.01999      Inf 0 30.85232 -0.82851442   0   1     3  84.454383
+#> 2  0.00000 0.000000 1 40.38176 -0.41218222   0   0     1   0.000000
+#> 3 24.39051      Inf 0 50.08066  0.01155381   1   1     3 244.513618
+#> 4  0.00000 3.023474 0 66.60333  0.73341401   0   0     3   1.271537
+#> 5 24.46140      Inf 0 42.73744 -0.30926460   1   0     3  74.034462
+#> 6  0.00000 2.882023 0 32.38987 -0.76134047   0   1     2   2.590831
 
-sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -5.0154  0.1019 -5.2151 -4.8156
-#> g0 intercept   -1.6237  0.0535 -1.7285 -1.5188
-#> w0 intercept   -1.2448  0.0630 -1.3683 -1.1213
-#> p0 intercept    0.2524  0.0082  0.2363  0.2684
+#> h          h   -5.0747  0.0985 -5.2678 -4.8817
+#> g0 intercept   -1.5582  0.0543 -1.6646 -1.4517
+#> w0 intercept   -1.1330  0.0611 -1.2527 -1.0132
+#> p0 intercept    0.2418  0.0081  0.2259  0.2576
 
-sim.predict <- model.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
+sim.predict <- PICmodel.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
 library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
 sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
@@ -90,27 +90,27 @@ as a covariate for prevalence then we would d the following:
 ``` r
 
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
-sim.dat2 <- model.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
+sim.dat2 <- PICmodel.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
-#>        left    right z      age      age.std hpv cyt cause     actual
-#> 1  0.000000 3.083559 0 38.17603 -0.513049138   1   0     2   1.289715
-#> 2 23.455882      Inf 0 49.79450 -0.006752224   0   0     3  72.228146
-#> 3  0.000000 0.000000 1 45.22406 -0.205917774   1   0     1   0.000000
-#> 4  0.000000 0.000000 1 53.22681  0.142817490   0   1     1   0.000000
-#> 5  3.354585 5.988839 0 42.77547 -0.312619582   1   0     2   3.493650
-#> 6 23.947902      Inf 0 60.24844  0.448798204   0   0     3 432.020861
+#>       left    right z      age     age.std hpv cyt cause      actual
+#> 1 20.84013      Inf 0 67.80002  0.77756521   0   0     3 180.1536740
+#> 2  0.00000 3.079331 0 50.70354  0.04217698   0   0     2   0.5028079
+#> 3  0.00000 3.030328 0 35.87145 -0.59581093   1   0     2   1.6694930
+#> 4  0.00000 3.758633 0 48.66340 -0.04557788   1   1     2   2.1876578
+#> 5  0.00000 0.000000 1 39.34947 -0.44620729   0   1     1   0.0000000
+#> 6 23.66946      Inf 0 31.86447 -0.76816762   0   0     3 122.6678531
 
-sim.fit2 <- model.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
+sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
 sim.fit2$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -4.8715  0.0769 -5.0222 -4.7208
-#> g0 intercept   -1.6057  0.0508 -1.7053 -1.5061
-#> g1       hpv    1.0150  0.0681  0.8816  1.1485
-#> w0 intercept   -1.1442  0.0525 -1.2471 -1.0413
-#> p0 intercept   -2.9472  0.0884 -3.1205 -2.7739
-#> p1       cyt    3.8994  0.1019  3.6997  4.0991
+#> h          h   -4.9134  0.0804 -5.0709 -4.7558
+#> g0 intercept   -1.5929  0.0487 -1.6884 -1.4975
+#> g1       hpv    1.0558  0.0680  0.9225  1.1891
+#> w0 intercept   -1.1973  0.0506 -1.2964 -1.0981
+#> p0 intercept   -2.9454  0.0887 -3.1193 -2.7716
+#> p1       cyt    4.0054  0.1030  3.8035  4.2073
 
-sim.predict2 <- model.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
+sim.predict2 <- PICmodel.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)
 
 # compare model fit to non-parametric Kaplan-Meier curve 
