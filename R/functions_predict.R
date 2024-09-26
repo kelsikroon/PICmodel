@@ -53,8 +53,8 @@ PICmodel.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F
 
     # create the expression for the complementary log log cumulative risk, it is coded this way to allow for user-defined covariates
     # and then we take the derivative so it needs to be in expression form
-    create.cllcr.expr <- function(n1, n2, n3, pars, data1, data2, data3){
-      pars <- pars[-1]
+    create.cllcr.expr <- function(n1, n2, n3, pars, data1, data2, data3, include.h){
+      if (include.h) pars <- pars[-1]
       # expression for lambda_1 (progression rate parameter)
       expr1 <- pars[1]
       if (n1 != 1){
@@ -95,7 +95,7 @@ PICmodel.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F
 
     # function to calculate the gradient of the log log cumulative risk using the built in R derivative function D()
     grad.loglog <- function(par){
-      return(eval(D(create.cllcr.expr(n1, n2, n3, pars, data1, data2, data3), par)))
+      return(eval(D(create.cllcr.expr(n1, n2, n3, pars, data1, data2, data3, include.h), par)))
     }
 
     return(sqrt(as.numeric(t(sapply(pars, grad.loglog)) %*% (solve(-fit[["hess"]])) %*% (sapply(pars, grad.loglog)))))
