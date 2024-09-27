@@ -44,8 +44,8 @@
 #' @examples
 #' fit <- PICmodel.fit(c(), c(), c(), sim.dat)
 #' fit$summary
-PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20,
-                      silent=T,  init=NULL, include.h=T, two.step.h=T, include.priors=T, fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
+PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL,
+                         include.h=T, two.step.h=T, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
   if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
   sapply(c("Rlab", "dplyr"), require, character.only = TRUE)
   # g(): the competing risks function used in the 'incidence' part of the mixture model
@@ -239,16 +239,29 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     p.expr <- exprs[[1]] # prevalent function
     f.expr <- exprs[[2]] # incident function
 
-    # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
-    deriv.cauchy <- function(param, order=1){
+
+    deriv.prior <- function(param, order=1){
       if(! include.priors) return(0)
 
-      if (order==1){
-        cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
-        return(eval(D(cauchy.prior, param)))
-      }else if (order==2){
-        cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
-        return(eval(D(D(cauchy.prior, param[1]), param[2])))
+      if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
+        if (order==1){ # derivative of log cauchy prior
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          return(eval(D(cauchy.prior, param)))
+        }else if (order==2){
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          return(eval(D(D(cauchy.prior, param[1]), param[2])))
+        }
+      }else if (prior.type == 't4'){
+        if (order==1){ # derivative of log t_4 prior
+          # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
+          return(eval(D(t4.prior, param)))
+        }else if (order==2){
+          # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
+          return(eval(D(D(t4.prior, param[1]), param[2])))
+        }
+
       }
     }
 
@@ -257,24 +270,24 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
     for (i in 1:m1){
       # we loop through the parameter list and calculate the first derivatives for gradient vector for the l1 and l2 parameters
-      grad[i] <- sum(((1-z)*(deriv.f(right, pars[i]) - deriv.f(left, pars[i]))/(f(right) - f(left)))[z!=1]) + deriv.cauchy(pars[i])
+      grad[i] <- sum(((1-z)*(deriv.f(right, pars[i]) - deriv.f(left, pars[i]))/(f(right) - f(left)))[z!=1]) + deriv.prior(pars[i])
       for (j in 1:i){
         # calculate 2nd derivatives for the Hessian matrix for h, l1 and l2 parameters;
         # the hessian is symmetric so we can fill both hess[i,j] and hess[j,i] together to save time
         hess[i,j] <- hess[j,i] <- sum(((1-z)*(f(right) - f(left))^(-2)*
                                          ((deriv.f(right, c(pars[i], pars[j]), 2) - deriv.f(left, c(pars[i], pars[j]),2))*(f(right) - f(left)) -
                                             (deriv.f(right, pars[i], 1) - deriv.f(left, pars[i],1))*(deriv.f(right, pars[j],1) - deriv.f(left, pars[j], 1))))[z!=1]) +
-          deriv.cauchy(c(pars[i], pars[j]), order=2)
+          deriv.prior(c(pars[i], pars[j]), order=2)
 
       }
     }
     # parameters for pi (for example p0, p1, p2, p3, p4) do not depend on left/right so we can calculate it separately
     for (i in (m1+1):length(current_par)){
       # calculate first derivatives for gradient vector for the pi parameters
-      grad[i] <- sum(eval(D(p.expr, pars[i]))) + deriv.cauchy(pars[i])
+      grad[i] <- sum(eval(D(p.expr, pars[i]))) + deriv.prior(pars[i])
       for (j in (m1+1):i){
         # calculate 2nd derivatives for Hessian matrix for the pi parameters; the hessian is symmetric so we can fill both hess[i,j] and hess[j,i] together to save time
-        hess[i,j] <- hess[j,i] <- sum(eval(D(D(p.expr, pars[i]), pars[j]))) + deriv.cauchy(c(pars[i], pars[j]), order=2)
+        hess[i,j] <- hess[j,i] <- sum(eval(D(D(p.expr, pars[i]), pars[j]))) + deriv.prior(c(pars[i], pars[j]), order=2)
       }
     }
     new_par <-  current_par - solve(hess)%*%grad # single Newton step to calculate updated parameters
@@ -287,14 +300,26 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       assign(pars[i], mles[i], envir=environment())
     }
 
-    deriv.cauchy <- function(param, order=1){
+    deriv.prior <- function(param, order=1){
       if(! include.priors) return(0)
-      if (order==1){
-        cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
-        return(eval(D(cauchy.prior, param)))
-      }else if (order==2){
-        cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
-        return(eval(D(D(cauchy.prior, param[1]), param[2])))
+
+      if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
+        if (order==1){ # derivative of log cauchy prior
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          return(eval(D(cauchy.prior, param)))
+        }else if (order==2){
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          return(eval(D(D(cauchy.prior, param[1]), param[2])))
+        }
+      }else if (prior.type == 't4'){
+        if (order==1){ # derivative of log t_4 prior
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
+          return(eval(D(t4.prior, param)))
+        }else if (order==2){
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
+          return(eval(D(D(t4.prior, param[1]), param[2])))
+        }
+
       }
     }
 
@@ -308,15 +333,15 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
         dh_j[j] <- dh # only for the parameter j under consideration add the small h
         dh_ij[c(i,j)] <- dh # for both i and j add the small h
 
-        if (i ==j){ # only the diagonal entries have non-zero cauchy prior derivative
+        if (i ==j){ # only the diagonal entries have non-zero prior derivatives
           hess[i,i] <- (-log.likelihood.h(mles+2*dh_i,  data, include.h, est.h) + 16*log.likelihood.h(mles+dh_i,  data, include.h, est.h) - 30*log.likelihood.h(mles,  data, include.h, est.h) +
-                          16*log.likelihood.h(mles-dh_i,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h))/(12*dh^2) + deriv.cauchy(c(pars[i], pars[i]), order=2)
+                          16*log.likelihood.h(mles-dh_i,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h))/(12*dh^2) + deriv.prior(c(pars[i], pars[i]), order=2)
 
         }else{ # accuracy to the order 4
           f_ii <- (-log.likelihood.h(mles+2*dh_i,  data, include.h, est.h) + 16*log.likelihood.h(mles+dh_i,  data, include.h, est.h) - 30*log.likelihood.h(mles,  data, include.h, est.h) +
-                     16*log.likelihood.h(mles-dh_i,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h))/(12*dh^2) + deriv.cauchy(c(pars[i], pars[i]), order=2)
+                     16*log.likelihood.h(mles-dh_i,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h))/(12*dh^2) + deriv.prior(c(pars[i], pars[i]), order=2)
           f_jj <- (-log.likelihood.h(mles+2*dh_j,  data, include.h, est.h) + 16*log.likelihood.h(mles+dh_j,  data, include.h, est.h) - 30*log.likelihood.h(mles,  data, include.h, est.h) +
-                     16*log.likelihood.h(mles-dh_j,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_j,  data, include.h, est.h))/(12*dh^2) + deriv.cauchy(c(pars[j], pars[j]), order=2)
+                     16*log.likelihood.h(mles-dh_j,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_j,  data, include.h, est.h))/(12*dh^2) + deriv.prior(c(pars[j], pars[j]), order=2)
 
           hess_entry <- (16*(log.likelihood.h(mles+dh_ij,  data, include.h, est.h) + log.likelihood.h(mles-dh_ij,  data, include.h, est.h)) -
                            (log.likelihood.h(mles+2*dh_ij,  data, include.h, est.h) + log.likelihood.h(mles-2*dh_ij,  data, include.h, est.h)) -
