@@ -18,6 +18,7 @@ PICmodel.fit(
   include.h = T,
   two.step.h = T,
   include.priors = T,
+  prior.type = "cauchy",
   fixed.h = NULL,
   intercept.prog = T,
   intercept.clear = T,
@@ -53,7 +54,9 @@ PICmodel.fit(
 
 \item{two.step.h}{Indicator variable for whether to perform a two-step procedure to obtain initial values when background risk is included. Defaults to TRUE.}
 
-\item{include.priors}{Indicator variable for whether to include weakly informative Cauchy priors in the estimation procedure. Defaults to TRUE.}
+\item{include.priors}{Indicator variable for whether to include priors in the estimation procedure. Defaults to TRUE.}
+
+\item{prior.type}{Choice of prior, either "Cauchy" or "t4" (for a t-distribution prior with 4 degrees of freedom) prior. Defaults to the weakly informative Cauchy prior.}
 
 \item{fixed.h}{Option to supply a fixed value of background risk, in which case it is treated as fixed and not included in parameter estimation and summary statistics. Needs to be on the log scale, e.g., background risk of 0.01 will use $log(0.01) = 4.6$ as input. Defaults to NULL.}
 
