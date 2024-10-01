@@ -203,38 +203,11 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
         expr3 <- paste0(expr3, ifelse(i!=1, "+", ""), model_par[n1+n2+i+ifelse(intercept.prev, 1, 0)], "*", "data3", i)
     }}
 
-    p.expr <- ifelse(n3==1, str2expression(paste0("z*log(", expr3, ") + (1-z)*log(1-", expr3, ")")),
-                     str2expression(paste0("z*(", expr3, ") - log(1 + exp(",expr3, "))")))
+    p.expr <- ifelse(n3==1 & intercept.prev, str2expression(paste0("z*log(", expr3, ") + (1-z)*log(1-", expr3, ")")),str2expression(paste0("z*(", expr3, ") - log(1 + exp(",expr3, "))")))
     f.expr <- str2expression(paste0("(1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",expr1 ,")/(exp(", expr1, ") + exp(",expr2,")))*(1-exp(-(exp(",expr1,") + exp(", expr2,"))*t))"))
     return(list(p.expr, f.expr))
   }
 
-  deriv.prior <- function(param, order=1){
-    if(! include.priors) return(0)
-
-    if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
-      if (order==1){ # derivative of log cauchy prior
-        cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
-        return(eval(D(cauchy.prior, param)))
-      }else if (order==2){
-        cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
-        return(eval(D(D(cauchy.prior, param[1]), param[2])))
-      }
-    }else if (prior.type == 't4'){
-      if (order==1){ # derivative of log t_4 prior
-        # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
-        #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
-        #return(eval(D(t4.prior, param)))
-        return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
-      }else if (order==2){
-        # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
-        #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
-        #return(eval(D(D(t4.prior, param[1]), param[2])))
-        return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
-      }
-
-    }
-  }
 
   mstep.h <- function(current_par, expected_z, data, include.h, est.h=T){
     z <- expected_z # expected value of z = output from the estep.h() function
@@ -261,6 +234,38 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
         return(ifelse(t==Inf, 0, (eval(D(f.expr, param)))))
       }else if (order==2){
         return(ifelse(t==Inf, 0, (eval(D(D(f.expr, param[1]), param[2])))))
+      }
+    }
+
+
+    model.exprs <- build.expr.h(pars, include.h, est.h)
+    p.expr <- model.exprs[[1]] # prevalent function
+    f.expr <- model.exprs[[2]] # incident function
+
+    deriv.prior <- function(param, order=1){
+      if(! include.priors) return(0)
+
+      if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
+        if (order==1){ # derivative of log cauchy prior
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          return(eval(D(cauchy.prior, param)))
+        }else if (order==2){
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          return(eval(D(D(cauchy.prior, param[1]), param[2])))
+        }
+      }else if (prior.type == 't4'){
+        if (order==1){ # derivative of log t_4 prior
+          # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
+          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
+          #return(eval(D(t4.prior, param)))
+          return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
+        }else if (order==2){
+          # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
+          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
+          #return(eval(D(D(t4.prior, param[1]), param[2])))
+          return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
+        }
+
       }
     }
 
@@ -299,6 +304,32 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       assign(pars[i], mles[i], envir=environment())
     }
 
+    deriv.prior <- function(param, order=1){
+      if(! include.priors) return(0)
+
+      if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
+        if (order==1){ # derivative of log cauchy prior
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          return(eval(D(cauchy.prior, param)))
+        }else if (order==2){
+          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          return(eval(D(D(cauchy.prior, param[1]), param[2])))
+        }
+      }else if (prior.type == 't4'){
+        if (order==1){ # derivative of log t_4 prior
+          # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
+          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
+          #return(eval(D(t4.prior, param)))
+          return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
+        }else if (order==2){
+          # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
+          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
+          #return(eval(D(D(t4.prior, param[1]), param[2])))
+          return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
+        }
+
+      }
+    }
 
     dh <- 1e-4 # step size for numerical differentiation
     hess.size <- length(mles)
@@ -429,10 +460,6 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   data2 <- covariate_data[[2]]
   data3 <- covariate_data[[3]]
 
-  exprs <- build.expr.h(pars, include.h, est.h)
-  p.expr <- exprs[[1]] # prevalent function
-  f.expr <- exprs[[2]] # incident function
-
   if ((n1 !=1 & intercept.prog) | (n1 > 0 & !intercept.prog)){ # if there are covariates for progression
     for (i in 1:length(l1_x)){
       assign(paste0("data1", i), data1[,i + ifelse(intercept.prog, 1, 0)], envir=environment())
@@ -452,8 +479,10 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     two.step.h <- F
     include.h <- T
     est.h <- F
-  }else{
+  }else if(include.h){
     est.h <- T
+  }else{
+    est.h <- F
   }
 
   # if initial values are not supplied, then they need to be randomly generated:
