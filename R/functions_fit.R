@@ -256,14 +256,14 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       }else if (prior.type == 't4'){
         if (order==1){ # derivative of log t_4 prior
           # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
-          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
-          #return(eval(D(t4.prior, param)))
-          return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
+          return(eval(D(t4.prior, param)))
+          #return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
         }else if (order==2){
           # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
-          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
-          #return(eval(D(D(t4.prior, param[1]), param[2])))
-          return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
+          return(eval(D(D(t4.prior, param[1]), param[2])))
+          #return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
         }
 
       }
