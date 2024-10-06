@@ -46,7 +46,7 @@
 #' fit <- PICmodel.fit(c(), c(), c(), sim.dat)
 #' fit$summary
 PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL,
-                         include.h=T, two.step.h=T, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
+                         include.h=T, h.method='2step', two.step.h=T, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
   if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
   sapply(c("Rlab", "dplyr"), require, character.only = TRUE)
   # g(): the competing risks function used in the 'incidence' part of the mixture model
@@ -104,7 +104,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   #               and the prevalent/incident indicator variable
   # Output:
   #   - value of the log-likelihood for the current parameter values
-  log.likelihood.h <- function(current_par, data, include.h, est.h=T){
+  log.likelihood.h <- function(current_par, data, include.h, est.h=T, fixed.h=fixed.h){
     z <- data[[3]] # indicator variable for prevalent or incident disease
     if (include.h){
       if (est.h) {
@@ -128,7 +128,6 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       p <- exp((data3) %*% current_par[(n1+n2+1):(n1+n2+n3)])/(1+exp((data3) %*% current_par[(n1+n2+1):(n1+n2+n3)]))
     }
 
-
     f <- function(t) return(ifelse(t==Inf, 1, (1-exp(-h*t)) + exp(-h*t)*(l1/(l1 + l2))*(1-exp(-(l1 + l2)*t))))
 
     llk <- rep(0, length(right)) # create empty vector to store log-likelihood values
@@ -140,7 +139,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     return(sum(llk))
   }
 
-  estep.h <- function(current_par, data, include.h, est.h=T){
+  estep.h <- function(current_par, data, include.h, est.h=T, fixed.h=fixed.h){
     z <- data[[3]] # indicator variable for prevalent or incident disease
     if (include.h){
       if (est.h) {
@@ -170,7 +169,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     return(z)
   }
 
-  build.expr.h <- function(model_par, include.h, est.h=T){
+  build.expr.h <- function(model_par, include.h, est.h=T, fixed.h=fixed.h){
     # function to 'build' the expected log-likelihood function as an R 'expression' which
     # allows it to be differentiated w.r.t. different parameters in the mstep() function
 
@@ -209,17 +208,17 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
 
-  mstep.h <- function(current_par, expected_z, data, include.h, est.h=T){
+  mstep.h <- function(current_par, expected_z, data, include.h, est.h=T, fixed.h=fixed.h){
     z <- expected_z # expected value of z = output from the estep.h() function
     m1 <- n1+n2
     if (include.h){
       if (est.h) {
-        m1 <- n1+n2 + 1
+        m1 <- n1+n2 + 1 # if estimating h then add one to number of parameters
       }else {
         h <- fixed.h
       }
     }else {
-      h <- -Inf
+      h <- -Inf # if h is not estimated set at zero
     }
 
     # assign the values of current_par to vectors with names from the 'pars' list (this will or won't have h and the number of parameters will correspond)
@@ -237,7 +236,6 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       }
     }
 
-
     model.exprs <- build.expr.h(pars, include.h, est.h)
     p.expr <- model.exprs[[1]] # prevalent function
     f.expr <- model.exprs[[2]] # incident function
@@ -247,10 +245,12 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
       if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
         if (order==1){ # derivative of log cauchy prior
-          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          #cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          cauchy.prior <- str2expression(paste0("1/(pi*2.5*(1+ (", param ,"/2.5)^2 ))"))
           return(eval(D(cauchy.prior, param)))
         }else if (order==2){
-          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          #cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          cauchy.prior <- str2expression(paste0("1/(pi*2.5*(1+ (", param[1],"/2.5)^2 ))"))
           return(eval(D(D(cauchy.prior, param[1]), param[2])))
         }
       }else if (prior.type == 't4'){
@@ -258,12 +258,10 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
           # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
           t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
           return(eval(D(t4.prior, param)))
-          #return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
         }else if (order==2){
           # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
           t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
           return(eval(D(D(t4.prior, param[1]), param[2])))
-          #return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
         }
 
       }
@@ -273,7 +271,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     grad <- rep(0, length(current_par)) # empty gradient matrix
 
     for (i in 1:m1){
-      # we loop through the parameter list and calculate the first derivatives for gradient vector for the l1 and l2 parameters
+      # we loop through the parameter list and calculate the first derivatives for gradient vector for the l1 and l2 parameters (and h if estimated)
       grad[i] <- sum(((1-z)*(deriv.f(right, pars[i]) - deriv.f(left, pars[i]))/(f(right) - f(left)))[z!=1]) + deriv.prior(pars[i])
       for (j in 1:i){
         # calculate 2nd derivatives for the Hessian matrix for h, l1 and l2 parameters;
@@ -299,7 +297,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   # numerical.hess(): function to calculate the hessian using numerical methods
-  numerical.hess <- function(mles, data, include.h, est.h=T){
+  numerical.hess <- function(mles, data, include.h, est.h=T, fixed.h=fixed.h){
     for (i in 1:length(pars)){    # assign the values of current_par to vectors with names from the 'pars' list (this will or won't have h and the number of parameters will correspond)
       assign(pars[i], mles[i], envir=environment())
     }
@@ -309,23 +307,26 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
       if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
         if (order==1){ # derivative of log cauchy prior
-          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          #cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
+          cauchy.prior <- str2expression(paste0("1/(pi*2.5*(1+ (", param ,"/2.5)^2 ))"))
+
           return(eval(D(cauchy.prior, param)))
         }else if (order==2){
-          cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          #cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param[1], "^2 + 2.5^2))"))
+          cauchy.prior <- str2expression(paste0("1/(pi*2.5*(1+ (", param[1],"/2.5)^2 ))"))
           return(eval(D(D(cauchy.prior, param[1]), param[2])))
         }
       }else if (prior.type == 't4'){
         if (order==1){ # derivative of log t_4 prior
           # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
-          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
-          #return(eval(D(t4.prior, param)))
-          return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
+          return(eval(D(t4.prior, param)))
+          #return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
         }else if (order==2){
           # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
-          #t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
-          #return(eval(D(D(t4.prior, param[1]), param[2])))
-          return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
+          t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
+          return(eval(D(D(t4.prior, param[1]), param[2])))
+          #return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
         }
 
       }
@@ -342,18 +343,18 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
         dh_ij[c(i,j)] <- dh # for both i and j add the small h
 
         if (i ==j){ # only the diagonal entries have non-zero prior derivatives
-          hess[i,i] <- (-log.likelihood.h(mles+2*dh_i,  data, include.h, est.h) + 16*log.likelihood.h(mles+dh_i,  data, include.h, est.h) - 30*log.likelihood.h(mles,  data, include.h, est.h) +
-                          16*log.likelihood.h(mles-dh_i,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h))/(12*dh^2) + deriv.prior(c(pars[i], pars[i]), order=2)
+          hess[i,i] <- (-log.likelihood.h(mles+2*dh_i,  data, include.h, est.h, fixed.h) + 16*log.likelihood.h(mles+dh_i,  data, include.h, est.h, fixed.h) - 30*log.likelihood.h(mles,  data, include.h, est.h, fixed.h) +
+                          16*log.likelihood.h(mles-dh_i,  data, include.h, est.h, fixed.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h, fixed.h))/(12*dh^2) + deriv.prior(c(pars[i], pars[i]), order=2)
 
         }else{ # accuracy to the order 4
-          f_ii <- (-log.likelihood.h(mles+2*dh_i,  data, include.h, est.h) + 16*log.likelihood.h(mles+dh_i,  data, include.h, est.h) - 30*log.likelihood.h(mles,  data, include.h, est.h) +
-                     16*log.likelihood.h(mles-dh_i,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h))/(12*dh^2) + deriv.prior(c(pars[i], pars[i]), order=2)
-          f_jj <- (-log.likelihood.h(mles+2*dh_j,  data, include.h, est.h) + 16*log.likelihood.h(mles+dh_j,  data, include.h, est.h) - 30*log.likelihood.h(mles,  data, include.h, est.h) +
-                     16*log.likelihood.h(mles-dh_j,  data, include.h, est.h) - log.likelihood.h(mles-2*dh_j,  data, include.h, est.h))/(12*dh^2) + deriv.prior(c(pars[j], pars[j]), order=2)
+          f_ii <- (-log.likelihood.h(mles+2*dh_i,  data, include.h, est.h, fixed.h) + 16*log.likelihood.h(mles+dh_i,  data, include.h, est.h, fixed.h) - 30*log.likelihood.h(mles,  data, include.h, est.h, fixed.h) +
+                     16*log.likelihood.h(mles-dh_i,  data, include.h, est.h, fixed.h) - log.likelihood.h(mles-2*dh_i,  data, include.h, est.h, fixed.h))/(12*dh^2) + deriv.prior(c(pars[i], pars[i]), order=2)
+          f_jj <- (-log.likelihood.h(mles+2*dh_j,  data, include.h, est.h, fixed.h) + 16*log.likelihood.h(mles+dh_j,  data, include.h, est.h, fixed.h) - 30*log.likelihood.h(mles,  data, include.h, est.h, fixed.h) +
+                     16*log.likelihood.h(mles-dh_j,  data, include.h, est.h, fixed.h) - log.likelihood.h(mles-2*dh_j,  data, include.h, est.h, fixed.h))/(12*dh^2) + deriv.prior(c(pars[j], pars[j]), order=2)
 
-          hess_entry <- (16*(log.likelihood.h(mles+dh_ij,  data, include.h, est.h) + log.likelihood.h(mles-dh_ij,  data, include.h, est.h)) -
-                           (log.likelihood.h(mles+2*dh_ij,  data, include.h, est.h) + log.likelihood.h(mles-2*dh_ij,  data, include.h, est.h)) -
-                           30*log.likelihood.h(mles,  data, include.h, est.h))/(24*dh^2) - f_ii/2 - f_jj/2
+          hess_entry <- (16*(log.likelihood.h(mles+dh_ij,  data, include.h, est.h, fixed.h) + log.likelihood.h(mles-dh_ij,  data, include.h, est.h, fixed.h)) -
+                           (log.likelihood.h(mles+2*dh_ij,  data, include.h, est.h, fixed.h) + log.likelihood.h(mles-2*dh_ij,  data, include.h, est.h, fixed.h)) -
+                           30*log.likelihood.h(mles,  data, include.h, est.h, fixed.h))/(24*dh^2) - f_ii/2 - f_jj/2
 
           hess[i, j] <- hess[j, i] <- hess_entry
         }
@@ -363,7 +364,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   # em.function.h(): combining the E- and M-step and repeating until the parameter estimates converge
-  em.function.h <- function(init, data, include.h, est.h=T){
+  em.function.h <- function(init, data, include.h, est.h=T, fixed.h=fixed.h){
     new_theta <- init
     old_llk <- 0
     new_llk <- 100 # make big to start with
@@ -372,16 +373,16 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     while ((abs(new_llk - old_llk) > epsilon)){
       current_theta <- new_theta
       old_llk <- new_llk
-      next_em_step <- mstep.h(current_theta, estep.h(current_theta, data, include.h, est.h), data, include.h, est.h)
+      next_em_step <- mstep.h(current_theta, estep.h(current_theta, data, include.h, est.h, fixed.h=fixed.h), data, include.h, est.h, fixed.h=fixed.h)
       new_theta <- as.vector(next_em_step[[1]])
-      new_llk <- log.likelihood.h(new_theta, data, include.h, est.h)
+      new_llk <- log.likelihood.h(new_theta, data, include.h, est.h, fixed.h=fixed.h)
       if (!silent & (iter %/% 10 ==0 | iter %% 10 ==0)) print(round(c(new_theta, new_llk), 4))
       iter <- iter + 1
       if (iter > 1000){
         break
       }
     }
-    hess <- numerical.hess(new_theta, data, include.h, est.h)
+    hess <- numerical.hess(new_theta, data, include.h, est.h, fixed.h)
     names(new_theta) <- pars
     std.dev <- round(sqrt(diag(solve(-hess))),4)
     param <- c(if(include.h & est.h){"h"}, if(intercept.prog) {"intercept"}, l1_x, if(intercept.clear) {"intercept"}, l2_x, if(intercept.prev) {"intercept"}, pi_x)
@@ -393,15 +394,17 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   # short.em():  lots of short runs of the em function to generate appropriate starting values
-  short.em <- function(data, init.h.only, include.h, init, est.h=T){
+  short.em <- function(data, init.h.only, include.h, init, est.h=T, fixed.h){
     if(!init.h.only){ #initial values for only l1, l2, p
       new_theta <- log(runif(n1+n2+n3))
       if (n3==1 & intercept.prev) new_theta[n1+n2+n3] <- exp(new_theta[n1+n2+n3]) # if only one parameter for prevalence, then no covariates ==> they're not on log scale
       if(include.h & est.h) { # only generate if estimating h
-        new_theta <- c(log(runif(1, 0, 0.02)), new_theta)
+        new_theta <- c(log(0.001), new_theta) #c(log(runif(1, 0, 0.02)), new_theta)
       }
+    }else if (!is.null(fixed.h)){
+      new_theta <- c(fixed.h, init)
     }else{# initial values for background risk using previously found values of l1, l2, p
-      new_theta <- c(log(runif(1, 0, 0.02)), init)
+      new_theta <- c(log(0.001), init) # c(log(runif(1, 0, 0.02)), init)
     }
     new_llk <- 100
     old_llk <- 0
@@ -410,21 +413,21 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       current_theta <- new_theta
       old_llk <- new_llk
       iter <- iter + 1
-      new_theta <- try(as.vector(mstep.h(current_theta, estep.h(current_theta, data, include.h, est.h), data, include.h, est.h)[[1]]), silent=T)
-      if (class(new_theta) == 'try-error') return(short.em(data, init.h.only, include.h, init, est.h))
-      new_llk <- log.likelihood.h(new_theta, data, include.h, est.h)
-      if (abs(new_llk) == Inf | is.nan(new_llk) | is.na(new_llk)) return(short.em(data, init.h.only, include.h, init, est.h))
+      new_theta <- try(as.vector(mstep.h(current_theta, estep.h(current_theta, data, include.h, est.h, fixed.h), data, include.h, est.h, fixed.h)[[1]]), silent=T)
+      if (class(new_theta) == 'try-error') return(short.em(data, init.h.only, include.h, init, est.h, fixed.h))
+      new_llk <- log.likelihood.h(new_theta, data, include.h, est.h, fixed.h)
+      if (abs(new_llk) == Inf | is.nan(new_llk) | is.na(new_llk)) return(short.em(data, init.h.only, include.h, init, est.h, fixed.h))
     }
     return(list(theta.hat = new_theta, log.likelihood = new_llk))
   }
 
   # init.generator(): performs short runs of the em function using short.em and then returns the most common set of
   # starting values with the highest loglikelihood as the initial values
-  init.generator <- function(data, init.h.only, include.h, init, est.h=T){
+  init.generator <- function(data, init.h.only, include.h, init, est.h=T, fixed.h){
     if (!silent) pb <- txtProgressBar(min = 0, max = short.runs, style = 3, width = 50, char = "=")
     short.inits <- list()
     for(k in 1:short.runs) {
-      short.inits[[k]] <- short.em(data, init.h.only, include.h, init, est.h)[c("theta.hat", "log.likelihood")]
+      short.inits[[k]] <- short.em(data, init.h.only, include.h, init, est.h, fixed.h)[c("theta.hat", "log.likelihood")]
       if (!silent) setTxtProgressBar(pb, k)
     }
     if (!silent) close(pb)
@@ -460,6 +463,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   data2 <- covariate_data[[2]]
   data3 <- covariate_data[[3]]
 
+  {
   if ((n1 !=1 & intercept.prog) | (n1 > 0 & !intercept.prog)){ # if there are covariates for progression
     for (i in 1:length(l1_x)){
       assign(paste0("data1", i), data1[,i + ifelse(intercept.prog, 1, 0)], envir=environment())
@@ -474,6 +478,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     }}
 
   pars <- create.par(n1, n2, n3) # creates a vector of the names of parameters that need to be estimated
+  }
 
   if (!is.null(fixed.h)) {
     two.step.h <- F
@@ -485,39 +490,91 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     est.h <- F
   }
 
+  df <- function(f, x, ...) {
+    # calculate the derivative of the log-likelihood using the formal definition of the derivative
+    dx <- 0.00001
+    d <- (f(fixed.h = x + dx, ...) - f(fixed.h=x-dx, ...)) / 2*dx
+    return(d)
+  }
+
+
+  bisection.em <- function(a, b, lower.fit, upper.fit){
+    max.iter <- 50
+    iter <- 1
+    tol <- 1e-5
+    mid.init <- lower.fit$theta.hat
+    while (abs(a - b) > tol && max.iter > iter){
+      c <- (a+b)/2
+
+      mid.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=5, short.runs=5, silent=T,  init = mid.init,
+                              include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(c), intercept.prog, intercept.clear, intercept.prev)
+
+      lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = include.h, est.h =F)
+      upper.res <- df(log.likelihood.h, x = log(b), current_par = upper.fit$theta.hat, data=data, include.h = include.h, est.h =F)
+      mid.res <- df(log.likelihood.h, x = log(c), current_par = mid.fit$theta.hat, data=data, include.h = include.h, est.h =F)
+
+      if (mid.res*upper.res >= 0 ){ # if middle and upper are same sign then upper bound = middle bound ==> the change is between lower and middle
+        b <- c # b is the upper bound value
+        upper.fit <- mid.fit
+        mid.init <- mid.fit$theta.hat
+      }else if (mid.res*lower.res >= 0){ # if middle and lower are the same sign then lower bound = middle bound ==> change is between middle and upper
+        a <- c # a is the lower bound value
+        lower.fit <- mid.fit
+        mid.init <- mid.fit$theta.hat
+      }
+      iter <- iter + 1
+    }
+    best.fit <- mid.fit
+    return(best.fit)
+  }
+
+
+  if (h.method == '2step' & include.h==T){
+    two.step.h <- T
+  }
+
   # if initial values are not supplied, then they need to be randomly generated:
   if (is.null(init)){
     # if background risk is not included, then two.step.h is always false because starting value for background risk doesn't need to be generated
     if (include.h ==F) two.step.h <- F
 
-    if (two.step.h){
+    if (two.step.h & h.method=='2step'){
       # two.step.h = option to first generate starting values without background risk and then repeat with background risk
       if(!silent) print(noquote("Generating inital values without background risk."))
       # first we get initial values for parameters EXCEPT background risk (h)
-      init.without.h <- init.generator(data, include.h =F, init.h.only =F, init=NULL)
+      init.without.h <- init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = fixed.h)
 
       #init.without.h <- em.function.h(init.without.h, data, include.h=F)$theta.hat
       if (!silent) print(init.without.h)
       if(!silent) print(noquote("Generating inital values with background risk."))
 
       if(include.h) pars <- c('h', pars)
-      init <- init.generator(data, include.h =T, init.h.only =T, init=init.without.h)
+      init <- init.generator(data, include.h =T, init.h.only =T, init=init.without.h, fixed.h = fixed.h)
+    }else if(h.method == 'bisection'){
+      if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
+      upper.h <- 0.005
 
-    }else{ # otherwise, generate initial values
+      lower.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T, init,
+                              include.h=F, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=NULL, intercept.prog, intercept.clear, intercept.prev)
+
+      upper.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T,  init = lower.fit$theta.hat,
+                              include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(upper.h), intercept.prog, intercept.clear, intercept.prev)
+      bisection.init <- suppressWarnings(bisection.em(0, upper.h, lower.fit, upper.fit)) # ignore warnings about negative sqrt
+      if (! silent) print( c(h=bisection.init$fixed.h, bisection.init$theta.hat))
+      final.res <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=1, short.runs=1, silent=F,  init= c(h=bisection.init$fixed.h, bisection.init$theta.hat),
+                                include.h=T, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=NULL, intercept.prog, intercept.clear, intercept.prev)
+      return(final.res) # if bisection method just return results here
+    }else{ # otherwise, generate initial values for all
       if(include.h & est.h) pars <- c('h', pars) # if background risk is included by initial values for h are not generated by 2-step then add h to pars
-      init <- init.generator(data, include.h = include.h, init.h.only =F, init=NULL, est.h=est.h)
+      init <- init.generator(data, include.h = include.h, init.h.only =F, init=NULL, est.h=est.h, fixed.h = fixed.h)
     }
-  }
+  }else if(include.h & est.h) pars <- c('h', pars)
+
 
   # run the function
   if(!silent) print(noquote("Running EM algorithm."))
-  final.res <- em.function.h(init, data, include.h, est.h)
+  final.res <- suppressWarnings(em.function.h(init, data, include.h, est.h, fixed.h))
   return(final.res)
 }
-
-
-
-
-
 
 
