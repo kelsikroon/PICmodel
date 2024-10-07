@@ -557,7 +557,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
       upper.h <- 0.005
 
-      lower.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T, init,
+      lower.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=F, init,
                               include.h=F, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=NULL, intercept.prog, intercept.clear, intercept.prev)
 
       upper.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T,  init, #init = lower.fit$theta.hat,
