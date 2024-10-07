@@ -511,7 +511,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
       # mid.fit <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=5, short.runs=5, silent=T,  init = mid.init,
       #                         include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(c), intercept.prog, intercept.clear, intercept.prev)
-
+      silent <- T
       mid.fit <-  em.function.h(init = mid.init, data, include.h=T, est.h=F, fixed.h=log(c))
 
       lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = include.h, est.h =F)
@@ -558,7 +558,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     }else if(h.method == 'bisection'){
       if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
       upper.h <- 0.005
-
+      silent <- T
       lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
                                  data, include.h=F, est.h=F, fixed.h=NULL)
 
