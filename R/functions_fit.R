@@ -509,7 +509,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     while (abs(a - b) > tol && max.iter > iter){
       c <- (a+b)/2
       print(c(a, c, b))
-      mid.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=5, short.runs=5, silent=T,  init = mid.init,
+      mid.fit <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=5, short.runs=5, silent=T,  init = mid.init,
                               include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(c), intercept.prog, intercept.clear, intercept.prev)
 
       lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = include.h, est.h =F)
@@ -557,16 +557,21 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
       upper.h <- 0.005
 
-      lower.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=F, init,
-                              include.h=F, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=NULL, intercept.prog, intercept.clear, intercept.prev)
+      # lower.fit <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=F, init,
+      #                         include.h=F, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=NULL, intercept.prog, intercept.clear, intercept.prev)
+      lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
+                                 data, include.h=F, est.h=F, fixed.h=NULL)
 
-      upper.fit <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T,  init, #init = lower.fit$theta.hat,
-                              include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(upper.h), intercept.prog, intercept.clear, intercept.prev)
+      lower.fit <- em.function.h(init = init.generator(data, include.h =T, init.h.only =F, init=NULL, est.h=F, fixed.h = log(upper.h)),
+                                 data, include.h=T, est.h=F, fixed.h=log(0.005))
+      print("here")
+
+      # upper.fit <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T,  init, #init = lower.fit$theta.hat,
+      #                         include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(upper.h), intercept.prog, intercept.clear, intercept.prev)
       bisection.init <- suppressWarnings(bisection.em(0, upper.h, lower.fit, upper.fit)) # ignore warnings about negative sqrt
 
       if (! silent) print( c(h=bisection.init$fixed.h, bisection.init$theta.hat))
-      print("here")
-      final.res <- PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=1, short.runs=1, silent=F,  init= c(h=bisection.init$fixed.h, bisection.init$theta.hat),
+      final.res <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=1, short.runs=1, silent=F,  init= c(h=bisection.init$fixed.h, bisection.init$theta.hat),
                                 include.h=T, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=NULL, intercept.prog, intercept.clear, intercept.prev)
       return(final.res) # if bisection method just return results here
     }else{ # otherwise, generate initial values for all
