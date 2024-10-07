@@ -562,7 +562,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
                                  data, include.h=F, est.h=F, fixed.h=NULL)
 
-      lower.fit <- em.function.h(init = init.generator(data, include.h =T, init.h.only =F, init=NULL, est.h=F, fixed.h = log(upper.h)),
+      upper.fit <- em.function.h(init = init.generator(data, include.h =T, init.h.only =F, init=NULL, est.h=F, fixed.h = log(upper.h)),
                                  data, include.h=T, est.h=F, fixed.h=log(0.005))
 
       # upper.fit <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter, short.runs, silent=T,  init, #init = lower.fit$theta.hat,
