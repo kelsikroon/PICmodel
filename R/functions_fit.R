@@ -507,9 +507,9 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       silent <- T
       mid.fit <-  em.function.h(init = mid.init, data, include.h=T, est.h=F, fixed.h=log(c))
 
-      lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = include.h, est.h =F)
-      upper.res <- df(log.likelihood.h, x = log(b), current_par = upper.fit$theta.hat, data=data, include.h = include.h, est.h =F)
-      mid.res <- df(log.likelihood.h, x = log(c), current_par = mid.fit$theta.hat, data=data, include.h = include.h, est.h =F)
+      lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = T, est.h =F)
+      upper.res <- df(log.likelihood.h, x = log(b), current_par = upper.fit$theta.hat, data=data, include.h = T, est.h =F)
+      mid.res <- df(log.likelihood.h, x = log(c), current_par = mid.fit$theta.hat, data=data, include.h = T, est.h =F)
 
       if (mid.res*upper.res >= 0 ){ # if middle and upper are same sign then upper bound = middle bound ==> the change is between lower and middle
         b <- c # b is the upper bound value
@@ -550,7 +550,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       init <- init.generator(data, include.h =T, init.h.only =T, init=init.without.h, fixed.h = fixed.h)
     }else if(h.method == 'bisection'){
       if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
-      upper.h <- 0.01
+      upper.h <- 0.05
       old.silent <- silent
       silent <- T
       lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
