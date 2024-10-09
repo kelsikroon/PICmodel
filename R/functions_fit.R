@@ -307,7 +307,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       if(! include.priors) return(0)
 
       if (prior.type == 'cauchy'){ # cauchy prior on the parameter: param = pars[i], mean=0, t=2.5
-        if (order==1){ # derivative of log cauchy prior
+        if (order==1){ # derivative of cauchy prior
           #cauchy.prior <- str2expression(paste0("log(2.5) - log(pi*(", param, "^2 + 2.5^2))"))
           cauchy.prior <- str2expression(paste0("1/(pi*2.5*(1+ (", param ,"/2.5)^2 ))"))
 
@@ -319,15 +319,11 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
         }
       }else if (prior.type == 't4'){
         if (order==1){ # derivative of log t_4 prior
-          # str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))
           t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param,"^2)^(5/2))"))
           return(eval(D(t4.prior, param)))
-          #return(eval(str2expression(paste0("(-6*", param, ")/(5 + ", param, "^2)"))))
         }else if (order==2){
-          # str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))
           t4.prior <- str2expression(paste0("3/(8*(1 + 1/4 * ", param[1],"^2)^(5/2))"))
           return(eval(D(D(t4.prior, param[1]), param[2])))
-          #return(eval(str2expression(paste0("(-6*(-", param[1], "^2 + 5)/( 5 + ", param[1], "^2)^2"))))
         }
 
       }
@@ -508,9 +504,6 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     mid.init <- lower.fit$theta.hat
     while (abs(a - b) > tol && max.iter > iter){
       c <- (a+b)/2
-
-      # mid.fit <- PICmodel::PICmodel.fit(l1_x , l2_x, pi_x, data, epsilon, short.epsilon, short.iter=5, short.runs=5, silent=T,  init = mid.init,
-      #                         include.h, h.method="", two.step.h=F, include.priors, prior.type, fixed.h=log(c), intercept.prog, intercept.clear, intercept.prev)
       silent <- T
       mid.fit <-  em.function.h(init = mid.init, data, include.h=T, est.h=F, fixed.h=log(c))
 
@@ -570,6 +563,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
       silent <- old.silent # restore user choice of printing information
       if (! silent) print( c(h=bisection.init$fixed.h, bisection.init$theta.hat))
+      pars <- c("h", pars)
       final.res <-  em.function.h(init = c(h=bisection.init$fixed.h, bisection.init$theta.hat),data, include.h=T, est.h=T, fixed.h=NULL)
       return(final.res) # if bisection method just return results here
     }else{ # otherwise, generate initial values for all
