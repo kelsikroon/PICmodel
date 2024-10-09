@@ -550,7 +550,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       init <- init.generator(data, include.h =T, init.h.only =T, init=init.without.h, fixed.h = fixed.h)
     }else if(h.method == 'bisection'){
       if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
-      upper.h <- 0.05
+      upper.h <- 0.1
       old.silent <- silent
       silent <- T
       lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
