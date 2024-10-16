@@ -61,7 +61,7 @@ The `model.simulator()` function takes six parameters, described below:
 library(PICmodel)
 set.seed(2)
 sim.thetas <- c(-5, -1.6, -1.2, 0.25)
-sim.dat <- model.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+sim.dat <- PICmodel.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 ```
 
 Data is stored in a data frame with a row for each subject. The first and second columns of the data are the left and right intervals, corresponding to the last time the subject was seen without CIN2+ and the first time CIN2+ was detected, respectively. Following this we have an indicator variable, $z$, denoting whether disease was prevalent or incident or if disease status was unknown at baseline (shown with `NA`). Note that if disease status at baseline as unknown, then the left interval is fixed at zero since we have no additional information between baseline and the first time disease was detected. Furthermore, if disease was present at baseline, then both the left and right interval are set to zero.
@@ -72,7 +72,7 @@ In practical settings, the detection time might not be exactly at baseline, but 
 
 The `model.fit()` function takes the same 3 vectors containing the names of covariates used for the progression, 
 ```{r fit1}
-sim.fit <- model.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 ```
 
