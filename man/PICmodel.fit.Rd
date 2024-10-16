@@ -46,7 +46,7 @@ PICmodel.fit(
 
 \item{short.runs}{Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 20}
 
-\item{silent}{Indicator variable for whether to print out each iteration or not. Default value set to FALSE.}
+\item{silent}{Indicator variable for whether to print results to console during iterations. Default value set to FALSE.}
 
 \item{init}{Option to supply initial values instead of starting from random values in the model fit procedure. Defaults to NULL.}
 
