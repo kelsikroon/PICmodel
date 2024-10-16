@@ -400,7 +400,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     }else if (!is.null(fixed.h)){
       new_theta <- c(fixed.h, init)
     }else{# initial values for background risk using previously found values of l1, l2, p
-      new_theta <- c(log(0.01), init) # c(log(runif(1, 0, 0.02)), init)
+      new_theta <- c(log(0.001), init) # c(log(runif(1, 0, 0.02)), init)
     }
     new_llk <- 100
     old_llk <- 0
