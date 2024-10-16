@@ -47,7 +47,7 @@
 #' fit <- PICmodel.fit(c(), c(), c(), sim.dat)
 #' fit$summary
 PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL,
-                         include.h=T, h.method='2step', two.step.h=T, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
+                         include.h=T, two.step.h=T, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
   if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
   sapply(c("Rlab", "dplyr"), require, character.only = TRUE)
   # g(): the competing risks function used in the 'incidence' part of the mixture model
@@ -401,7 +401,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     }else if (!is.null(fixed.h)){
       new_theta <- c(fixed.h, init)
     }else{# initial values for background risk using previously found values of l1, l2, p
-      new_theta <- c(log(0.001), init) # c(log(runif(1, 0, 0.02)), init)
+      new_theta <- c(log(0.01), init) # c(log(runif(1, 0, 0.02)), init)
     }
     new_llk <- 100
     old_llk <- 0
@@ -478,65 +478,65 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   if (!is.null(fixed.h)) {
-    if (h.method != '2step') two.step.h <- F
+    i#f (h.method != '2step') two.step.h <- F
     include.h <- T
     est.h <- F
   }else if(include.h){
-    if (h.method == '2step') two.step.h <- T
-    else if (h.method == 'bisection') two.step.h <- F
+    #if (h.method == '2step') two.step.h <- T
+    #else if (h.method == 'bisection') two.step.h <- F
     est.h <- T
   }else{
     est.h <- F
   }
 
-  df <- function(f, x, ...) {
-    # calculate the derivative of the log-likelihood using the formal definition of the derivative
-    dx <- 0.00001
-    d <- (f(fixed.h = x + dx, ...) - f(fixed.h=x-dx, ...)) / 2*dx
-    return(d)
-  }
-
-
-  bisection.em <- function(a, b, lower.fit, upper.fit){
-    max.iter <- 50
-    iter <- 1
-    tol <- 1e-5
-    mid.init <- lower.fit$theta.hat
-    while (abs(a - b) > tol && max.iter > iter){
-      c <- (a+b)/2
-      silent <- T
-      mid.fit <-  em.function.h(init = mid.init, data, include.h=T, est.h=F, fixed.h=log(c))
-
-      lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = T, est.h =F)
-      upper.res <- df(log.likelihood.h, x = log(b), current_par = upper.fit$theta.hat, data=data, include.h = T, est.h =F)
-      mid.res <- df(log.likelihood.h, x = log(c), current_par = mid.fit$theta.hat, data=data, include.h = T, est.h =F)
-
-      if (mid.res*upper.res >= 0 ){ # if middle and upper are same sign then upper bound = middle bound ==> the change is between lower and middle
-        b <- c # b is the upper bound value
-        upper.fit <- mid.fit
-        mid.init <- mid.fit$theta.hat
-      }else if (mid.res*lower.res >= 0){ # if middle and lower are the same sign then lower bound = middle bound ==> change is between middle and upper
-        a <- c # a is the lower bound value
-        lower.fit <- mid.fit
-        mid.init <- mid.fit$theta.hat
-      }
-      iter <- iter + 1
-    }
-    best.fit <- mid.fit
-    return(best.fit)
-  }
-
-
-  if (h.method == '2step' & include.h==T){
-    two.step.h <- T
-  }
+  # df <- function(f, x, ...) {
+  #   # calculate the derivative of the log-likelihood using the formal definition of the derivative
+  #   dx <- 0.00001
+  #   d <- (f(fixed.h = x + dx, ...) - f(fixed.h=x-dx, ...)) / 2*dx
+  #   return(d)
+  # }
+  #
+  #
+  # bisection.em <- function(a, b, lower.fit, upper.fit){
+  #   max.iter <- 50
+  #   iter <- 1
+  #   tol <- 1e-5
+  #   mid.init <- lower.fit$theta.hat
+  #   while (abs(a - b) > tol && max.iter > iter){
+  #     c <- (a+b)/2
+  #     silent <- T
+  #     mid.fit <-  em.function.h(init = mid.init, data, include.h=T, est.h=F, fixed.h=log(c))
+  #
+  #     lower.res <- df(log.likelihood.h, x = log(a), current_par = lower.fit$theta.hat, data=data, include.h = T, est.h =F)
+  #     upper.res <- df(log.likelihood.h, x = log(b), current_par = upper.fit$theta.hat, data=data, include.h = T, est.h =F)
+  #     mid.res <- df(log.likelihood.h, x = log(c), current_par = mid.fit$theta.hat, data=data, include.h = T, est.h =F)
+  #
+  #     if (mid.res*upper.res >= 0 ){ # if middle and upper are same sign then upper bound = middle bound ==> the change is between lower and middle
+  #       b <- c # b is the upper bound value
+  #       upper.fit <- mid.fit
+  #       mid.init <- mid.fit$theta.hat
+  #     }else if (mid.res*lower.res >= 0){ # if middle and lower are the same sign then lower bound = middle bound ==> change is between middle and upper
+  #       a <- c # a is the lower bound value
+  #       lower.fit <- mid.fit
+  #       mid.init <- mid.fit$theta.hat
+  #     }
+  #     iter <- iter + 1
+  #   }
+  #   best.fit <- mid.fit
+  #   return(best.fit)
+  # }
+  #
+  #
+  # if (h.method == '2step' & include.h==T){
+  #   two.step.h <- T
+  # }
 
   # if initial values are not supplied, then they need to be randomly generated:
   if (is.null(init)){
     # if background risk is not included, then two.step.h is always false because starting value for background risk doesn't need to be generated
     if (include.h ==F) two.step.h <- F
 
-    if (two.step.h & h.method=='2step'){
+    if (two.step.h){
       # two.step.h = option to first generate starting values without background risk and then repeat with background risk
       if(!silent) print(noquote("Generating inital values without background risk."))
       # first we get initial values for parameters EXCEPT background risk (h)
@@ -548,25 +548,30 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
       if(include.h) pars <- c('h', pars)
       init <- init.generator(data, include.h =T, init.h.only =T, init=init.without.h, fixed.h = fixed.h)
-    }else if(h.method == 'bisection'){
-      if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
-      upper.h <- 0.1
-      old.silent <- silent
-      silent <- T
-      lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
-                                 data, include.h=F, est.h=F, fixed.h=NULL)
-
-      upper.fit <- em.function.h(init = init.generator(data, include.h =T, init.h.only =F, init=NULL, est.h=F, fixed.h = log(upper.h)),
-                                 data, include.h=T, est.h=F, fixed.h=log(upper.h))
-
-      bisection.init <- suppressWarnings(bisection.em(0, upper.h, lower.fit, upper.fit)) # ignore warnings about negative sqrt
-
-      silent <- old.silent # restore user choice of printing information
-      if (! silent) print( c(h=bisection.init$fixed.h, bisection.init$theta.hat))
-      pars <- c("h", pars)
-      final.res <-  em.function.h(init = c(h=bisection.init$fixed.h, bisection.init$theta.hat),data, include.h=T, est.h=T, fixed.h=NULL)
-      return(final.res) # if bisection method just return results here
-    }else{ # otherwise, generate initial values for all
+    }
+    # else if(h.method == 'bisection'){
+    #   if(!silent) print(noquote("Running EM algorithm with bisection method for background risk."))
+    #   upper.h <- 0.01
+    #   old.silent <- silent
+    #   silent <- T
+    #   lower.fit <- em.function.h(init = init.generator(data, include.h =F, init.h.only =F, init=NULL, est.h=F, fixed.h = NULL),
+    #                              data, include.h=F, est.h=F, fixed.h=NULL)
+    #   print(lower.fit$summary)
+    #   print(lower.fit$log.likelihood)
+    #   upper.fit <- em.function.h(init = init.generator(data, include.h =T, init.h.only =F, init=NULL, est.h=F, fixed.h = log(upper.h)),
+    #                              data, include.h=T, est.h=F, fixed.h=log(upper.h))
+    #   print(upper.fit$summary)
+    #   print(upper.fit$log.likelihood)
+    #
+    #   bisection.init <- suppressWarnings(bisection.em(0, upper.h, lower.fit, upper.fit)) # ignore warnings about negative sqrt
+    #
+    #   silent <- old.silent # restore user choice of printing information
+    #   if (! silent) print( c(h=bisection.init$fixed.h, bisection.init$theta.hat))
+    #   pars <- c("h", pars)
+    #   final.res <-  em.function.h(init = c(h=bisection.init$fixed.h, bisection.init$theta.hat),data, include.h=T, est.h=T, fixed.h=NULL)
+    #   return(final.res) # if bisection method just return results here
+    # }
+    else{ # otherwise, generate initial values for all
       if(include.h & est.h) pars <- c('h', pars) # if background risk is included by initial values for h are not generated by 2-step then add h to pars
       init <- init.generator(data, include.h = include.h, init.h.only =F, init=NULL, est.h=est.h, fixed.h = fixed.h)
     }
