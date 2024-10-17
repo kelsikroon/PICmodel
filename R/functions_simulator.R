@@ -44,7 +44,7 @@ PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, int
   n2 <- length(l2_x) + 1
   n3 <- length(pi_x) + 1
 
-  covariate_data <- create.covariate.data(data=data.frame(age=age, hpv=hpv, cyt=cytology))
+  covariate_data <- create.covariate.data(data=data.frame(age=age.std, hpv=hpv, cyt=cytology))
   data1 <- covariate_data[[1]]
   data2 <- covariate_data[[2]]
   data3 <- covariate_data[[3]]
@@ -62,7 +62,7 @@ PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, int
   }else if (n3 > 1){
     p <- exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)]))
   }
-
+  #print(p)
   # disease process
   t1 <- ifelse(rbern(n, p)==1, 0, Inf) # prevalent CIN2/3
   t2 <- ifelse(rbern(n, l1/(l1+l2))==1, rexp(n, rate=(l1+l2)), Inf) # due to the HPV infection at baseline
