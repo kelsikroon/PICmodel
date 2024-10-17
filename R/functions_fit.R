@@ -395,12 +395,12 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       new_theta <- log(runif(n1+n2+n3))
       if (n3==1 & intercept.prev) new_theta[n1+n2+n3] <- exp(new_theta[n1+n2+n3]) # if only one parameter for prevalence, then no covariates ==> they're not on log scale
       if(include.h & est.h) { # only generate if estimating h
-        new_theta <- c(log(0.001), new_theta) #c(log(runif(1, 0, 0.02)), new_theta)
+        new_theta <- c(log(runif(1, 0, 0.02)), new_theta) #c(log(0.001), new_theta) #
       }
     }else if (!is.null(fixed.h)){ # for fixed h with 2step just add this value in now
       new_theta <- c(fixed.h, init)
     }else{# initial values for background risk using previously found values of l1, l2, p...
-      new_theta <- c(log(0.001), init) # c(log(runif(1, 0, 0.02)), init)
+      new_theta <- c(log(runif(1, 0, 0.02)), init) #c(log(0.001), init) #
     }
     new_llk <- 100
     old_llk <- 0
