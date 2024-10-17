@@ -44,7 +44,7 @@ PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, int
   n2 <- length(l2_x) + 1
   n3 <- length(pi_x) + 1
 
-  covariate_data <- create.covariate.data(data=data.frame(age=age.std, hpv=hpv, cyt=cytology))
+  covariate_data <- create.covariate.data(data=data.frame(age=age, age.std=age.std, hpv=hpv, cyt=cytology))
   data1 <- covariate_data[[1]]
   data2 <- covariate_data[[2]]
   data3 <- covariate_data[[3]]
