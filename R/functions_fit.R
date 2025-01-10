@@ -476,7 +476,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
       # iteratively increase h based on log.likelihood increasing:
       while (fit.curr$log.likelihood < fit.new$log.likelihood){ # check that log.likelihood is increasing with each new value of h, otherwise stop
-        print(c(fit.new$fixed.h, fit.new$log.likelihood))
+        if(!silent) print(c(fit.new$fixed.h, fit.new$log.likelihood))
         fit.curr <- fit.new
         fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = fit.curr$fixed.h + 1)
       }
