@@ -135,10 +135,8 @@ score.test.gamma <- function(fit, dh, accuracy, data){
         l1s <- exp(temp_expression)
       }else if (param==2){ # store expression for l2 (clearance)
         l2s <- exp(temp_expression)
-      }else if (param ==3 & n3 !=1){ # store expression for pi (prevalence) --> use logit if there are covariates
+      }else if (param ==3){ # store expression for pi (prevalence) --> use logit if there are covariates
         prevs <- exp(temp_expression)/(1+exp(temp_expression))
-      }else if (param==3 & n3==1){ # store expression for pi (prevalence) --> use raw value if there are NOT covariates
-        prevs <- rep(temp_expression, n)
       }
     }
 
