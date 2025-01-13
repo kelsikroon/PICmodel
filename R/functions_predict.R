@@ -71,23 +71,23 @@ PICmodel.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F
 
       # expression for pi (prevalent probability parameter)
       expr3 <- pars[n1+n2+1]
-      if (n3 > 1){
-        for (i in 1:(n3-1)){
-          expr3 <- paste0(expr3, "+", pars[n1+n2+1+i], "*", "data3", i)
-        }
+      #if (n3 > 1){
+      for (i in 1:(n3-1)){
+        expr3 <- paste0(expr3, "+", pars[n1+n2+1+i], "*", "data3", i)
+      }
 
         #  expected complete log-likelihood for Ri!=Inf
-        llcr <- paste0("log(- log( (exp(", expr3, ")/(1+ exp(", expr3, "))) + (1/(1+exp(", expr3, ")))*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
-                       expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t)))))" )
+      llcr <- paste0("log(- log( (exp(", expr3, ")/(1+ exp(", expr3, "))) + (1/(1+exp(", expr3, ")))*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
+                      expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t)))))" )
 
 
-      }else if (n3 == 1){ # if there are no covariates for pi we use a different expression (don't need to use logit function)
-        #  expected complete log-likelihood for Ri!=Inf for when there is only intercept for pi parameter
-        # llcr <- paste0("log(- log( log(", expr3, ") + (log(1-", expr3, ") + log((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
-        #                expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t))))))" )
-        llcr <- paste0("log(- log( ", expr3, " + (1 - ", expr3, ")*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
-                       expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t)))))" )
-      }
+      # }else if (n3 == 1){ # if there are no covariates for pi we use a different expression (don't need to use logit function)
+      #   #  expected complete log-likelihood for Ri!=Inf for when there is only intercept for pi parameter
+      #   # llcr <- paste0("log(- log( log(", expr3, ") + (log(1-", expr3, ") + log((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
+      #   #                expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t))))))" )
+      #   llcr <- paste0("log(- log( ", expr3, " + (1 - ", expr3, ")*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
+      #                  expr1, ")/(exp(", expr1, ") + exp(", expr2, ")))*(1-exp(-(exp(", expr1, ") + exp(", expr2,"))*t)))))" )
+      # }
 
       # convert from string to expression to be used in the differentiate function in the gradient calculation
       return(str2expression(llcr))
@@ -137,12 +137,13 @@ PICmodel.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F
 
     l1 <- as.numeric(exp(data1 %*% theta.hat[1:(n1)]))
     l2 <- as.numeric(exp(data2 %*% theta.hat[(n1+1):(n1+n2)]))
-    if (n3 == 1){
-      #if pi has no covariates then the value of p is the same for all women
-      p <- theta.hat[n1+n2+n3]
-    }else if (n3 > 1){
-      p <- as.numeric(exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])))
-    }
+    # if (n3 == 1){
+    #   #if pi has no covariates then the value of p is the same for all women
+    #   p <- theta.hat[n1+n2+n3]
+    # }else if (n3 > 1){
+    #   p <- as.numeric(exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])))
+    # }
+    p <- as.numeric(exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% theta.hat[(n1+n2+1):(n1+n2+n3)])))
     prob <- p + (1-p)*(1 - exp(-h*time.points) + exp(-h*time.points)*g(l1, l2, time.points))
 
     ## calculate confidence errors for cumulative risk using the complementary log-log cumulative risk
