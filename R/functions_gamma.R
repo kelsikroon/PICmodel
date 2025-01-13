@@ -90,7 +90,7 @@ simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
 #' }
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-score.test.gamma <- function(fit, dh, accuracy, data){
+score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
   require("stringr")
   fixed.h <- fit$fixed.h
   n <- length(data$right)
