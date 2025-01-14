@@ -56,16 +56,12 @@ PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, int
 
   l1 <- exp(data1 %*% params[1:(n1)])
   l2 <- exp(data2 %*% params[(n1+1):(n1+n2)])
-  if (n3 == 1){
-    # if pi has no covariates then the value of p is the same for all women
-    p <- params[n1+n2+n3]
-  }else if (n3 > 1){
-    p <- exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)]))
-  }
+  p <- exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)])/(1+exp(data3 %*% params[(n1+n2+1):(n1+n2+n3)]))
+
   #print(p)
   # disease process
-  t1 <- ifelse(rbern(n, p)==1, 0, Inf) # prevalent CIN2/3
-  t2 <- ifelse(rbern(n, l1/(l1+l2))==1, rexp(n, rate=(l1+l2)), Inf) # due to the HPV infection at baseline
+  t1 <- ifelse(rbinom(n, 1, p)==1, 0, Inf) # prevalent CIN2/3
+  t2 <- ifelse(rbinom(n, 1, l1/(l1+l2))==1, rexp(n, rate=(l1+l2)), Inf) # due to the HPV infection at baseline
   if (include.h) {
     t3 <- rexp(n, rate=exp(h)) # due to the background risk (simulate value for everyone)
     t <- pmin(t1, t2, t3) # keep the minimum value as the actual event time
