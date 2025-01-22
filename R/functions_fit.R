@@ -101,59 +101,60 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   # log.likelihood(): function for the log-likelihood
-  log.likelihood.h <- function(current_par, data, include.h, est.h, fixed.h=fixed.h){
+  log.likelihood.h <- function(current.par, data, include.h, est.h, fixed.h=fixed.h){
     # Input:
-    #   - current_par: the current value of the parameters
+    #   - current.par: the current value of the parameters
     #   - data: data frame with columns (1) left, (2) right, and (3) z, representing the left and right interval
     #               and the prevalent/incident indicator variable
     # Output:
     #   - value of the log-likelihood for the current parameter values
 
     z <- data[[3]] # indicator variable for prevalent or incident disease
+
     if (include.h){
-      if (est.h) {
-        h <- exp(current_par[1])
-        current_par <- current_par[-1]
+      if (est.h) { # if background risk is being estimated then keep it in variable called h and remove from current parameters
+        h <- exp(current.par[1])
+        current.par <- current.par[-1]
       }else {
-        h <- exp(fixed.h)
+        h <- exp(fixed.h) # if h is not being estimated then a fixed.h will be supplied on the log scale so take exp
       }
     }else {
-      h <-0
+      h <-0 # otherwise background risk is fixed at zero if include.h=F
     }
 
     # multiply data by corresponding parameters to calculate l1, l2 and pi
-    l1 <- exp((data1) %*% current_par[1:(n1)]) # create current lambda 1 vector for each value in the data
-    l2 <- exp((data2) %*% current_par[(n1+1):(n1+n2)]) # create current lambda 1 vector for each value in the data
-    p <- exp((data3) %*% current_par[(n1+n2+1):(n1+n2+n3)])/(1+exp((data3) %*% current_par[(n1+n2+1):(n1+n2+n3)]))
+    l1 <- exp((data1) %*% current.par[1:(n1)]) # create current lambda 1 vector for each value in the data
+    l2 <- exp((data2) %*% current.par[(n1+1):(n1+n2)]) # create current lambda 1 vector for each value in the data
+    p <- exp((data3) %*% current.par[(n1+n2+1):(n1+n2+n3)])/(1+exp((data3) %*% current.par[(n1+n2+1):(n1+n2+n3)]))
     f <- function(t) return(ifelse(t==Inf, 1, (1-exp(-h*t)) + exp(-h*t)*(l1/(l1 + l2))*(1-exp(-(l1 + l2)*t))))
 
     llk <- rep(0, length(right)) # create empty vector to store log-likelihood values
-    llk[which(z==1)] <- I(log(p))[which(z==1)]
-    llk[which(z==0 & right<Inf)] <- I(log((1-p)*(f(right) - f(left))))[which(z==0 & right <Inf)]
-    llk[which(z==0 & right==Inf)] <- I(log((1-p)*(1- f(left))))[which(z==0 & right==Inf)]
-    llk[which(is.na(z) & right<Inf)] <- I(log(p + (1-p)*f(right)))[which(is.na(z) & right<Inf)]
-    llk[which(is.na(z) & right==Inf)] <- 0
+    llk[which(z==1)] <- I(log(p))[which(z==1)] # prevalent cases
+    llk[which(z==0 & right<Inf)] <- I(log((1-p)*(f(right) - f(left))))[which(z==0 & right <Inf)] # seperate incident cases when right<Inf
+    llk[which(z==0 & right==Inf)] <- I(log((1-p)*(1- f(left))))[which(z==0 & right==Inf)] # seperate incident cases when right==Inf
+    llk[which(is.na(z) & right<Inf)] <- I(log(p + (1-p)*f(right)))[which(is.na(z) & right<Inf)] # unknown baseline cases
+    llk[which(is.na(z) & right==Inf)] <- 0 # intervals with left=0 and right=Inf do not add anything to the likelihood
     return(sum(llk))
   }
 
   # estep.h(): function to calculate expectation of which mixture each subject belongs to
-  estep.h <- function(current_par, data, include.h, est.h, fixed.h=fixed.h){
+  estep.h <- function(current.par, data, include.h, est.h, fixed.h=fixed.h){
     z <- data[[3]] # indicator variable for prevalent or incident disease
     if (include.h){
-      if (est.h) {
-        h <- exp(current_par[1])
-        current_par <- current_par[-1]
+      if (est.h) { # if background risk is being estimated then keep it in variable called h and remove from current parameters
+        h <- exp(current.par[1])
+        current.par <- current.par[-1]
       }else {
-        h <- exp(fixed.h)
+        h <- exp(fixed.h) # if h is not being estimated then a fixed.h will be supplied on the log scale so take exp
       }
     }else {
-      h <-0
+      h <-0 # otherwise background risk is fixed at zero if include.h=F
     }
 
-    # multiply data by corresponding parameters to calculate l1, l2 and pi
-    l1 <- exp((data1) %*% current_par[1:(n1)])
-    l2 <- exp((data2) %*% current_par[(n1+1):(n1+n2)])
-    p <- exp((data3) %*% current_par[(n1+n2+1):(n1+n2+n3)])/(1+exp((data3) %*% current_par[(n1+n2+1):(n1+n2+n3)]))
+    # multiply data (with covariates) by corresponding parameters to calculate l1, l2 and pi
+    l1 <- exp((data1) %*% current.par[1:(n1)])
+    l2 <- exp((data2) %*% current.par[(n1+1):(n1+n2)])
+    p <- exp((data3) %*% current.par[(n1+n2+1):(n1+n2+n3)])/(1+exp((data3) %*% current.par[(n1+n2+1):(n1+n2+n3)])) # prevalence on logit scale
 
     # the expected value of z only depends on the right interval since the left is zero when z is unknown
     est <- p/(p + (1 - p)*(1-exp(-h*right) + exp(-h*right)*g(l1, l2, right)))
@@ -164,37 +165,43 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   # build.expr.h(): function to build the model expression as a string based on covariates selected by the user, to be used in differentiation
-  build.expr.h <- function(model_par, include.h, est.h, fixed.h=fixed.h){
-    # function to 'build' the expected log-likelihood function as an R 'expression' which
-    # allows it to be differentiated w.r.t. different parameters in the mstep() function
+  build.expr.h <- function(model.par, include.h, est.h, fixed.h=fixed.h){
+    # Input:
+    #   - model.par: the current value of the parameters
+    #   - include.h: indicator variable for whether background risk is included
+    #   - est.h: indicator variable for whether background risk is estimated
+    #   - fixed.h: fixed value of background risk (either input from user or from separate starting values for h)
+    # Output:
+    #   - the expected log-likelihood function as an R 'expression' which
+    #   allows it to be differentiated w.r.t. different parameters in the mstep() function
 
     # we loop through the names of covariate parameters (e.g., g0, g1, w0, p0, p1, p2) for each of l1, l2 and pi
     # and paste them together with the corresponding data matrix, this string is then used to create the
     # expression which will be differentiated w.r.t each parameter in the mstep() function
-    if(include.h & est.h) model_par <- model_par[-1] # remove h as first parameter if h is included as one of the parameters estimated
+    if(include.h & est.h) model.par <- model.par[-1] # remove h as first parameter if h is included as one of the parameters estimated
 
     # expression for lambda_1 (progression rate parameter)
-    expr1 <- ifelse(intercept.prog, model_par[1], "")
+    expr1 <- ifelse(intercept.prog, model.par[1], "")
     if (length(l1_x) > 0){
       if (intercept.prog) expr1 <- paste0(expr1, "+")
       for (i in 1:length(l1_x)){
-        expr1 <- paste0(expr1, ifelse(i!=1, "+", ""), model_par[i + ifelse(intercept.prog, 1, 0)], "*", "data1", i)
+        expr1 <- paste0(expr1, ifelse(i!=1, "+", ""), model.par[i + ifelse(intercept.prog, 1, 0)], "*", "data1", i)
     }}
 
     # expression for lambda_2 (clearance rate parameter)
-    expr2 <- ifelse(intercept.clear, model_par[n1+1], "")
+    expr2 <- ifelse(intercept.clear, model.par[n1+1], "")
     if (length(l2_x) >0){
       if (intercept.clear) expr2 <- paste0(expr2, "+")
       for (i in 1:length(l2_x)){
-        expr2 <- paste0(expr2, ifelse(i!=1, "+", ""), model_par[n1+i+ifelse(intercept.clear, 1, 0)], "*", "data2", i)
+        expr2 <- paste0(expr2, ifelse(i!=1, "+", ""), model.par[n1+i+ifelse(intercept.clear, 1, 0)], "*", "data2", i)
     }}
 
     # expression for pi (prevalent probability parameter)
-    expr3 <- ifelse(intercept.prev, model_par[n1+n2+1], "")
+    expr3 <- ifelse(intercept.prev, model.par[n1+n2+1], "")
     if (length(pi_x) > 0){
       if (intercept.prev)  expr3 <- paste0(expr3, "+")
       for (i in 1:length(pi_x)){
-        expr3 <- paste0(expr3, ifelse(i!=1, "+", ""), model_par[n1+n2+i+ifelse(intercept.prev, 1, 0)], "*", "data3", i)
+        expr3 <- paste0(expr3, ifelse(i!=1, "+", ""), model.par[n1+n2+i+ifelse(intercept.prev, 1, 0)], "*", "data3", i)
     }}
 
     # the prevalence and progression model are independent because after taking logs the multiplication becomes sums so we can estimate them separately
@@ -205,8 +212,21 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   }
 
   # mstep.h(): function to get the next parameter update based on the expected values
-  mstep.h <- function(current_par, expected_z, data, include.h, est.h, fixed.h=fixed.h){
-    z <- expected_z # expected value of z = output from the estep.h() function
+  mstep.h <- function(current.par, expected.z, data, include.h, est.h, fixed.h=fixed.h){
+    # Input:
+    #   - current.par: the current value of the parameters
+    #   - expected.z: probability of belonging to prevalence mixture
+    #   - data: the data with left and right intervals (and covariates)
+    #   - include.h: indicator variable for whether background risk is included
+    #   - est.h: indicator variable for whether background risk is estimated
+    #   - fixed.h: fixed value of background risk (either input from user or from separate starting values for h)
+    # Output:
+    #   - a list of:
+    #       + new.par: updated parameter after this iteration
+    #       + hess: hessian matrix of this iteration
+    #       + grad: gradient vector of this iteration
+
+    z <- expected.z # expected value of z = output from the estep.h() function
     m1 <- n1+n2
     if (include.h){
       if (est.h) {
@@ -218,9 +238,9 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       h <- -Inf # if h is not estimated set at zero
     }
 
-    # assign the values of current_par to vectors with names from the 'pars' list (this will or won't have h and the number of parameters will correspond)
+    # assign the values of current.par to vectors with names from the 'pars' list (this will or won't have h and the number of parameters will correspond)
     for (i in 1:length(pars)){
-      assign(pars[i], current_par[i], envir=environment())
+      assign(pars[i], current.par[i], envir=environment())
     }
 
     f <- function(t) return(ifelse(t==Inf, 1, (eval(f.expr)))) # incident function
@@ -260,8 +280,8 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       }
     }
 
-    hess <- matrix(rep(0, (length(current_par))^2), nrow=length(current_par)) # empty hessian matrix
-    grad <- rep(0, length(current_par)) # empty gradient matrix
+    hess <- matrix(rep(0, (length(current.par))^2), nrow=length(current.par)) # empty hessian matrix
+    grad <- rep(0, length(current.par)) # empty gradient matrix
 
     for (i in 1:m1){
       # we loop through the parameter list and calculate the first derivatives for gradient vector for the l1 and l2 parameters (and h if estimated)
@@ -275,7 +295,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       }
     }
     # parameters for pi (for example p0, p1, p2, p3, p4) do not depend on left/right so we can calculate it separately from rate parameters
-    for (i in (m1+1):length(current_par)){
+    for (i in (m1+1):length(current.par)){
       # calculate first derivatives for gradient vector for the pi parameters
       grad[i] <- sum(eval(D(p.expr, pars[i]))) + deriv.prior(pars[i])
       for (j in (m1+1):i){
@@ -283,13 +303,22 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
         hess[i,j] <- hess[j,i] <- sum(eval(D(D(p.expr, pars[i]), pars[j]))) + deriv.prior(c(pars[i], pars[j]), order=2)
       }
     }
-    new_par <-  current_par - solve(hess)%*%grad # single Newton step to calculate updated parameters
-    return(list(as.vector(new_par), hess, grad)) # return the new parameters
+    new.par <-  current.par - solve(hess)%*%grad # single Newton step to calculate updated parameters
+    return(list(as.vector(new.par), hess, grad)) # return the new parameters
   }
 
   # numerical.hess(): function to calculate the hessian using numerical methods
   numerical.hess <- function(mles, data, include.h, est.h=T, fixed.h=fixed.h){
-    for (i in 1:length(pars)){    # assign the values of current_par to vectors with names from the 'pars' list (this will or won't have h and the number of parameters will correspond)
+    # Input:
+    #   - mles: current MLEs of the model
+    #   - data: the data with left and right intervals (and covariates)
+    #   - include.h: indicator variable for whether background risk is included
+    #   - est.h: indicator variable for whether background risk is estimated
+    #   - fixed.h: fixed value of background risk (either input from user or from separate starting values for h)
+    # Output:
+    #   - hess: matrix of numerical hessian at current parameter estimates
+
+    for (i in 1:length(pars)){    # assign the values of mles to vectors with names from the 'pars' list (this will or won't have h and the number of parameters will correspond)
       assign(pars[i], mles[i], envir=environment())
     }
 
@@ -349,6 +378,25 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
   # em.function.h(): combining the E- and M-step and repeating until the parameter estimates converge
   em.function.h <- function(init, data, include.h, est.h=T, fixed.h=fixed.h){
+    # Input:
+    #   - init: the inital values (either supplied by user or found in previous step)
+    #   - data: the data with left and right intervals (and covariates)
+    #   - include.h: indicator variable for whether background risk is included
+    #   - est.h: indicator variable for whether background risk is estimated
+    #   - fixed.h: fixed value of background risk (either input from user or from separate starting values for h)
+    # Output:
+    #   - a list of:
+    #       + model: covariates used for each parameter
+    #       + inital.values: initial values found/ supplied
+    #       + fixed.h: whether background risk was kept fixed (output that will be helpful in predict function)
+    #       + theta.hat: final parameter estimates from the EM algorithm
+    #       + num.iterations: number of iterations it took for EM algorithm to run
+    #       + log.likelihood: log-likelihood value of the model at the MLE
+    #       + hess: hessian matrix of this iteration
+    #       + grad: gradient vector of this iteration
+    #       + std.dev: standard deviation of model parameters
+    #       + summary: data frame with parameters, estimates and confidence intervals
+
     new_theta <- init
     old_llk <- 0
     new_llk <- 100 # make big to start with
@@ -379,8 +427,16 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
 
   # short.em():  lots of short runs of the em function to generate appropriate starting values
   short.em <- function(data, include.h, fixed.h){
+    # Input:
+    #   - data: the data with left and right intervals (and covariates)
+    #   - include.h: indicator variable for whether background risk is included
+    #   - fixed.h: fixed value of background risk (either input from user or from separate starting values for h)
+    # Output:
+    #   - a list of:
+    #       + theta.hat: final parameter estimates from the EM algorithm
+    #       + log.likelihood: log-likelihood value of the model at the MLE
+
     new_theta <- log(runif(n1+n2+n3)) #initial values for only l1, l2, p
-    #if (n3==1 & intercept.prev) new_theta[n1+n2+n3] <- exp(new_theta[n1+n2+n3])
     new_llk <- 100
     old_llk <- 0
     iter <- 1
@@ -404,7 +460,14 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   # starting values with the highest loglikelihood as the initial values
   # --> used to get starting values for parameters besides background risk (h)
   init.generator <- function(data, include.h, fixed.h){
-    if (!silent) pb <- txtProgressBar(min = 0, max = short.runs, style = 3, width = 50, char = "=")
+    # Input:
+    #   - data: the data with left and right intervals (and covariates)
+    #   - include.h: indicator variable for whether background risk is included
+    #   - fixed.h: fixed value of background risk (either input from user or from separate starting values for h)
+    # Output:
+    #   - init: a vector of initial values found by the set of values that appear most in 10 (or 20) runs
+
+    if (!silent) pb <- txtProgressBar(min = 0, max = short.runs, style = 3, width = 50, char = "=") # make a progress bar
     short.inits <- list()
     for(k in 1:short.runs) {
       short.inits[[k]] <- short.em(data, include.h, fixed.h)[c("theta.hat", "log.likelihood")]
@@ -413,6 +476,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     if (!silent) close(pb)
     short.inits.mat <- matrix(unlist(short.inits), nrow=length(short.inits), byrow=T)
     ncols <- ncol(short.inits.mat)
+
     # find the set of parameter values that results in the maximum likelihood
     init.counts <- cbind(round(short.inits.mat[rev(order(short.inits.mat[,ncols])),1:(ncols-1)],1),
                          round(short.inits.mat[rev(order(short.inits.mat[,ncols])),ncols])) %>%
@@ -431,6 +495,8 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     return(inits)
   }
 
+  ### start organising data for input to functions ###
+
   left <- data[[1]] # left intervals from the data
   right <- data[[2]] # right intervals from the data
 
@@ -444,7 +510,6 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   data3 <- covariate_data[[3]] # data (with covariate columns) for prevalence
 
   # assign data for each covariate name
-  {
   if ((n1 !=1 & intercept.prog) | (n1 > 0 & !intercept.prog)){ # if there are covariates for progression
     for (i in 1:length(l1_x)){
       assign(paste0("data1", i), data1[,i + ifelse(intercept.prog, 1, 0)], envir=environment())
@@ -459,7 +524,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
     }}
 
   pars <- create.par(n1, n2, n3) # creates a vector of the names of parameters that need to be estimated
-  }
+
 
   # if initial values are not supplied, then they need to be randomly generated:
   if (is.null(init)){
@@ -496,7 +561,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
   # run the function
   if(!silent) print(noquote("Running EM algorithm."))
   final.res <- suppressWarnings(em.function.h(init, data, include.h, est.h, fixed.h))
-  return(final.res)
+  return(final.res) # return final results
 }
 
 
