@@ -560,7 +560,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, s
 
   # run the function
   if(!silent) print(noquote("Running EM algorithm."))
-  final.res <- suppressWarnings(em.function.h(init, data, include.h, est.h, fixed.h))
+  final.res <- suppressWarnings(em.function.h(init, data, include.h, est.h, fixed.h, epsilon=epsilon))
   return(final.res) # return final results
 }
 
