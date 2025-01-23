@@ -377,7 +377,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, s
   }
 
   # em.function.h(): combining the E- and M-step and repeating until the parameter estimates converge
-  em.function.h <- function(init, data, include.h, est.h=T, fixed.h=fixed.h){
+  em.function.h <- function(init, data, include.h, est.h=T, fixed.h=fixed.h, epsilon){
     # Input:
     #   - init: the inital values (either supplied by user or found in previous step)
     #   - data: the data with left and right intervals (and covariates)
