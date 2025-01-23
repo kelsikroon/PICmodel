@@ -45,7 +45,7 @@
 #' @examples
 #' fit <- PICmodel.fit(c(), c(), c(), sim.dat)
 #' fit$summary
-PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL,
+PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL,
                          include.h=T, starting.h = -12, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
   if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
   sapply(c("Rlab", "dplyr"), require, character.only = TRUE)
@@ -536,14 +536,14 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-08, s
       if(!silent) print(noquote("Generating inital values with background risk."))
       old.silent <- silent # store user input value of silent variable
       silent <- T # force the next section to not print anything because it runs the model many times
-      fit.curr <- em.function.h(init.without.h, data, include.h=F, est.h=F, fixed.h = NULL) # fit the model with those initial values with background risk set at zero
-      fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = starting.h)# fit the model using the output above as initial values and background risk set at starting.h (-12)
+      fit.curr <- em.function.h(init.without.h, data, include.h=F, est.h=F, fixed.h = NULL, epsilon=1e-04) # fit the model with those initial values with background risk set at zero
+      fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = starting.h, epsilon=1e-04)# fit the model using the output above as initial values and background risk set at starting.h (-12)
 
       # iteratively increase h based on log.likelihood increasing:
       while (fit.curr$log.likelihood < fit.new$log.likelihood){ # check that log.likelihood is increasing with each new value of h, otherwise stop
         if(!old.silent) print(c(fit.new$fixed.h, fit.new$log.likelihood))
         fit.curr <- fit.new
-        fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = fit.curr$fixed.h + 1)
+        fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = fit.curr$fixed.h + 1, epsilon=1e-04)
       }
       init <- c(fit.curr$fixed.h, fit.curr$theta.hat) # when stopped because likelihood found, then set these as initial values, also with the fixed value of h added in
       est.h <- T # now set est.h <- T because we will estimate background risk to get confidence intervals
