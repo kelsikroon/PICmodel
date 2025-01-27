@@ -33,38 +33,72 @@ simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
 
 
   n.tests <- round(25/interval)  # have at least 25 years of screening
-  screening_times <- data.frame(x1 = ifelse(rbern(n, show_prob), 0, NA))  # test at 0 years
+  screening_times <- data.frame(x1 = ifelse(rbinom(n, 1, show_prob), 0, NA))  # test at 0 years
   for (i in 1:n.tests){
     # loop through number of tests and generate screening time using normal distribution around that interval times test number
     # if interval = 3, then these are generated from beta distributions with means around 3, 6, 9...
-    screening_times <- data.frame(cbind(screening_times, xi = ifelse(rbern(n, show_prob), (i-1)*interval + interval/2 + rbeta(n, 20, 20)*interval, NA) ))
+    screening_times <- data.frame(cbind(screening_times, xi = ifelse(rbinom(n, 1, show_prob), (i-1)*interval + interval/2 + rbeta(n, 20, 20)*interval, NA) ))
   } #
   #print(head(screening_times))
   screening_times[!is.na(screening_times) & screening_times<0] <- 0
 
   screening_times$actual <- t
+  screening_times$actual <- t
+  screening_times$cause <- cause
+  screening_times$cause <- NULL
+
+  if (show_prob ==1) {
+    screens <- lapply(seq(1, n), function(x) unlist((screening_times)[x,] ))
+  }
+  else {
+    screens <- apply(screening_times, 1, function(x) c(na.omit(unlist(x, use.names=FALSE))))
+  }
+
+
   # create a list of the screening times with NA values removed for each subject
-  #screens <- lapply(seq(1, n), function(x) unlist((screening_times)[x,] ))
-  screens <- apply(screening_times, 1, function(x) c(na.omit(unlist(x, use.names=FALSE))))
-  # create left intervals by finding the last value in the list of screens that is smaller than the actual event time ß
+  # #screens <- lapply(seq(1, n), function(x) unlist((screening_times)[x,] ))
+  # screens <- apply(screening_times, 1, function(x) c(na.omit(unlist(x, use.names=FALSE))))
+  # # create left intervals by finding the last value in the list of screens that is smaller than the actual event time ß
+  # left <- vapply(screens, function(x) x[Position(function(z) z <= x[length(x)], x[c(1:(length(x))-1)], right=TRUE)], 1)
+  # z[is.na(left)] <- NA # if left interval is NA then disease was unknown at baseline because it was not checked
+  # left[is.na(left)] <- 0 # set unknown left intervals to 0 because CIN2/3 could have been there at baseline
+  #
+  # # create a list of right intervals by finding the first value in the list of screen times that is greater than the actual event time
+  # right <- vapply(screens, function(x) x[Position(function(z) z > x[length(x)], x[c(1:(length(x))-1)])], 1)
+  #
+  # # if the actual event time t=0 and left interval l=0 and the indicator is not unknown
+  # # (meaning disease was checked at baseline), then the right interval is also zero
+  # right[left==0 & t==0 & !is.na(z)] <-  0
+  # z[which(right==0)] <- 1 # right is only zero when disease is prevalent (defined above)
+  #
+  # # if the actual time of CIN2/3 development is after the last screening time, then the set the time to Inf
+  # last_screening_time <- vapply(screens, function(x) tail(x, 2)[1], 1)
+  # right[screening_times$actual > last_screening_time] <- Inf
+  #
+  # # if the right interval is NA then set it to infinity - this happens if all screening
+  # # rounds were NA (very rare, this is just to avoid errors in case it happens)
+  # right[is.na(right)] <- Inf
+
+
+  z <- rep(0, n) # create the indicator variable Z
+
+  # create left intervals by finding the last value in the list of screens that is smaller than the actual event time
   left <- vapply(screens, function(x) x[Position(function(z) z <= x[length(x)], x[c(1:(length(x))-1)], right=TRUE)], 1)
+
+  # create a list of right intervals by finding the first value of screen times that is greater than the actual event time
+  right <- vapply(screens, function(x) x[Position(function(z) z > x[length(x)], x[c(1:(length(x))-1)])], 1)
+
   z[is.na(left)] <- NA # if left interval is NA then disease was unknown at baseline because it was not checked
   left[is.na(left)] <- 0 # set unknown left intervals to 0 because CIN2/3 could have been there at baseline
 
-  # create a list of right intervals by finding the first value in the list of screen times that is greater than the actual event time
-  right <- vapply(screens, function(x) x[Position(function(z) z > x[length(x)], x[c(1:(length(x))-1)])], 1)
-
-  # if the actual event time t=0 and left interval l=0 and the indicator is not unknown
-  # (meaning disease was checked at baseline), then the right interval is also zero
-  right[left==0 & t==0 & !is.na(z)] <-  0
+  right[left==0 & t==0 & !is.na(z)] <-  0 # if actual time=0 and left=0 and z!=NA ==> disease checked at baseline, then right=0 also
   z[which(right==0)] <- 1 # right is only zero when disease is prevalent (defined above)
 
   # if the actual time of CIN2/3 development is after the last screening time, then the set the time to Inf
   last_screening_time <- vapply(screens, function(x) tail(x, 2)[1], 1)
   right[screening_times$actual > last_screening_time] <- Inf
 
-  # if the right interval is NA then set it to infinity - this happens if all screening
-  # rounds were NA (very rare, this is just to avoid errors in case it happens)
+  # if right=NA then set to infinity - happens if all screening rounds were NA (very rare, this is to avoid errors in case it happens)
   right[is.na(right)] <- Inf
 
   return(data.frame(left, right, z = z,  cause=cause, actual=t))
@@ -137,6 +171,9 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
         l2s <- exp(temp_expression)
       }else if (param ==3){ # store expression for pi (prevalence) --> use logit if there are covariates
         prevs <- exp(temp_expression)/(1+exp(temp_expression))
+        if (lengths[param] == 1){
+          prevs <- rep(prevs, dim(data)[1])
+        }
       }
     }
 
@@ -221,3 +258,4 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
   colnames(gamma_hess) <- rownames(gamma_hess) <- hess.names
   return(list(grad = gamma_gradient[1], inv.hess = solve(gamma_hess), hess=gamma_hess, loglik = logl(mles, p=1), p.val = p.val))
 }
+
