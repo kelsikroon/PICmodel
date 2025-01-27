@@ -17,7 +17,7 @@ simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
   z <- rep(0, n) # create the indicator variable Z
 
   # disease process
-  t1 <- ifelse(rbern(n, p)==1, 0, Inf) # prevalent CIN2/3
+  t1 <- ifelse(rbinom(n, 1, p)==1, 0, Inf) # prevalent CIN2/3
   x <- rgamma(n, shape=k, rate=l1) # simulate from gamma distribution for cause 1 (i.e., progression)
   y <- rexp(n, rate=l2) # simulate from exponential distribution for cause 2 (i.e., clearance)
   t2 <- ifelse(x < y, x, Inf) # take gamma time if it occurs first, otherwise set progression time to infinity
