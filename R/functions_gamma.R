@@ -13,7 +13,7 @@ simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
   h <- exp(params[1])
   l1 <- exp(params[2])
   l2 <- exp(params[3])
-  p <- params[4]
+  p <- exp(params[4])/(1+exp(params[4]))
   z <- rep(0, n) # create the indicator variable Z
 
   # disease process
