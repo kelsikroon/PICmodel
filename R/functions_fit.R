@@ -556,6 +556,8 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, s
       est.h <- F
       init <- init.generator(data, include.h = F, fixed.h = NULL)
     }
+  }else{ # if initial values are supplied then background risk is estimated only if fixed.h=NULL and include.h=TRUE, otherwise background risk is not estimated
+    est.h <- ifelse(is.null(fixed.h) & include.h, T, F)
   }
 
   # run the function
