@@ -543,7 +543,7 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, s
       while (fit.curr$log.likelihood < fit.new$log.likelihood){ # check that log.likelihood is increasing with each new value of h, otherwise stop
         if(!old.silent) print(c(fit.new$fixed.h, fit.new$log.likelihood))
         fit.curr <- fit.new
-        fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = fit.curr$fixed.h + 1, epsilon=1e-04)
+        fit.new <- em.function.h(fit.curr$theta.hat, data, include.h=T, est.h=F, fixed.h = fit.curr$fixed.h + 1, epsilon=1e-05)
       }
       init <- c(fit.curr$fixed.h, fit.curr$theta.hat) # when stopped because likelihood found, then set these as initial values, also with the fixed value of h added in
       est.h <- T # now set est.h <- T because we will estimate background risk to get confidence intervals
