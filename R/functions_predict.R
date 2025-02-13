@@ -1,4 +1,4 @@
-#' Make predictions from the prevalence-incidence-cure model
+#' Make predictions from the prevalence-incidence-clearance model
 #' @param data Data set of covariates from which to make the predictions. Must contain columns that correspond to covariates used in `fit`.
 #' @param time.points Numeric vector of time points used to make cumulative risk predictions
 #' @param fit Parameter estimates for the model to be used (output from model.fit)

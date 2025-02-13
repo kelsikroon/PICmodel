@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_fit.R
 \name{PICmodel.fit}
 \alias{PICmodel.fit}
-\title{Fit the prevalence-incidence-cure model}
+\title{Fit the prevalence-incidence-clearance model}
 \usage{
 PICmodel.fit(
   l1_x = c(),
@@ -69,20 +69,20 @@ PICmodel.fit(
 \value{
 The output is a list containing the following elements:
 \itemize{
-\item model: list containing names of covariates used for each parameter
-\item initial.values: either the initial values determined by the Short EM algorithm process or the supplied initial values
-\item fixed.h: the fixed value of background risk if supplied, otherwise NULL
-\item theta.hat: optimum parameter values estimated by the EM algorithm
-\item num.iterations: number of iterations until the EM algorithm converged
-\item log.likelihood: value of the log.likelihood at the maximum likelihood estimates
-\item hess: hessian matrix at the maximum likelihood estimates
-\item grad: value of the gradient vector at the the maximum likelihood estimates
-\item std.dev: standard deviation of parameter estimates
-\item summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `g0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
+\item `model`: list containing names of covariates used for each parameter
+\item `initial.values`: either the initial values determined by the Short EM algorithm process or the supplied initial values
+\item `fixed.h`: the fixed value of background risk if supplied, otherwise NULL
+\item `theta.hat`: optimum parameter values estimated by the EM algorithm
+\item `num.iterations`: number of iterations until the EM algorithm converged
+\item `log.likelihood`: value of the log.likelihood at the maximum likelihood estimates
+\item `hess`: hessian matrix at the maximum likelihood estimates
+\item `grad`: value of the gradient vector at the the maximum likelihood estimates
+\item `std.dev`: standard deviation of parameter estimates
+\item `summary`: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `g0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
 }
 }
 \description{
-This function fits our Prevalence-Incidence-Cure (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
+This function fits our Prevalence-Incidence-Clearance (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
 It is possible for the user to select the covariates that will be used for each parameter.
 }
 \examples{

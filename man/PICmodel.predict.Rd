@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_predict.R
 \name{PICmodel.predict}
 \alias{PICmodel.predict}
-\title{Make predictions from the prevalence-incidence-cure model}
+\title{Make predictions from the prevalence-incidence-clearance model}
 \usage{
 PICmodel.predict(data, time.points, fit, calc.CI = F)
 }
@@ -19,7 +19,7 @@ PICmodel.predict(data, time.points, fit, calc.CI = F)
 The output is a list for each unique combination of covariates used in the model containing the time points, the cumulative risk estimate along with the upper and lower 95% confidence intervals.
 }
 \description{
-Make predictions from the prevalence-incidence-cure model
+Make predictions from the prevalence-incidence-clearance model
 }
 \author{
 Kelsi Kroon, Hans Bogaards, Hans Berkhof

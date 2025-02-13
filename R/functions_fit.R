@@ -1,7 +1,7 @@
 
-#' Fit the prevalence-incidence-cure model
+#' Fit the prevalence-incidence-clearance model
 #'
-#' This function fits our Prevalence-Incidence-Cure (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
+#' This function fits our Prevalence-Incidence-Clearance (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
 #' It is possible for the user to select the covariates that will be used for each parameter.
 #'
 #' @param l1_x A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Can be left blank for empty model.
@@ -28,16 +28,16 @@
 #' @param intercept.prev Indicator variable for whether a general intercept is estimated for the prevalence parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.
 #' @return The output is a list containing the following elements:
 #' \itemize{
-#' \item model: list containing names of covariates used for each parameter
-#' \item initial.values: either the initial values determined by the Short EM algorithm process or the supplied initial values
-#' \item fixed.h: the fixed value of background risk if supplied, otherwise NULL
-#' \item theta.hat: optimum parameter values estimated by the EM algorithm
-#' \item num.iterations: number of iterations until the EM algorithm converged
-#' \item log.likelihood: value of the log.likelihood at the maximum likelihood estimates
-#' \item hess: hessian matrix at the maximum likelihood estimates
-#' \item grad: value of the gradient vector at the the maximum likelihood estimates
-#' \item std.dev: standard deviation of parameter estimates
-#' \item summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `g0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
+#' \item `model`: list containing names of covariates used for each parameter
+#' \item `initial.values`: either the initial values determined by the Short EM algorithm process or the supplied initial values
+#' \item `fixed.h`: the fixed value of background risk if supplied, otherwise NULL
+#' \item `theta.hat`: optimum parameter values estimated by the EM algorithm
+#' \item `num.iterations`: number of iterations until the EM algorithm converged
+#' \item `log.likelihood`: value of the log.likelihood at the maximum likelihood estimates
+#' \item `hess`: hessian matrix at the maximum likelihood estimates
+#' \item `grad`: value of the gradient vector at the the maximum likelihood estimates
+#' \item `std.dev`: standard deviation of parameter estimates
+#' \item `summary`: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `g0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
 #' }
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
