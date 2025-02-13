@@ -78,10 +78,11 @@ PICmodel.predict <- function(data, time.points, fit, calc.CI=F){
 
       # expression for pi (prevalent probability parameter)
       expr3 <- pars[n1+n2+1]
-      #if (n3 > 1){
-      for (i in 1:(n3-1)){
-        expr3 <- paste0(expr3, "+", pars[n1+n2+1+i], "*", "data3", i)
-      }
+      if (n3 != 1){
+        for (i in 1:(n3-1)){
+          expr3 <- paste0(expr3, "+", pars[n1+n2+1+i], "*", "data3", i)
+      }}
+
 
         #  expected complete log-likelihood for Ri!=Inf
       llcr <- paste0("log(- log( (exp(", expr3, ")/(1+ exp(", expr3, "))) + (1/(1+exp(", expr3, ")))*((1-exp(-exp(h)*t)) + exp(-exp(h)*t)*(exp(",
