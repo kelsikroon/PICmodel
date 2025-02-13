@@ -1,8 +1,5 @@
 #' Make predictions from the prevalence-incidence-cure model
-#' @param l1_x A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter (must match column name(s) in the input data)
-#' @param l2_x A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter (must match column name(s) in the input data)
-#' @param pi_x A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease) (must match column name(s) in the input data)
-#' @param data Data set of covariates from which to make the predictions.
+#' @param data Data set of covariates from which to make the predictions. Must contain columns that correspond to covariates used in `fit`.
 #' @param time.points Numeric vector of time points used to make cumulative risk predictions
 #' @param fit Parameter estimates for the model to be used (output from model.fit)
 #' @param calc.CI Indicator variable for whether confidence intervals for the cumulative risk should be calculated. Defaults to FALSE.
@@ -11,7 +8,16 @@
 #'
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-PICmodel.predict <- function(l1_x, l2_x, pi_x, data, time.points, fit, calc.CI=F, include.h=T){
+PICmodel.predict <- function(data, time.points, fit, calc.CI=F, include.h=T){
+  model <- fit$model
+  l1_x <- model[[1]]
+  l2_x <- model[[2]]
+  pi_x <- model[[3]]
+
+  if (is.null(l1_x)) l1_x <- c()
+  if (is.null(l2_x)) l2_x <- c()
+  if (is.null(pi_x)) pi_x <- c()
+
   g <- function(l1, l2, t){
     return(l1 / (l1 + l2) * (1 - exp(-(l1 + l2)* t)))
   }
