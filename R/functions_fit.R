@@ -37,7 +37,7 @@
 #' \item hess: hessian matrix at the maximum likelihood estimates
 #' \item grad: value of the gradient vector at the the maximum likelihood estimates
 #' \item std.dev: standard deviation of parameter estimates
-#' \item summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons)
+#' \item summary: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `g0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
 #' }
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
