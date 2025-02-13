@@ -18,11 +18,11 @@ PICmodel.simulator(
 \arguments{
 \item{n}{Number of women in the simulated data set.}
 
-\item{l1_x}{A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter. Options are "age", "HPV16" and "cytology".}
+\item{l1_x}{A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
 
-\item{l2_x}{A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter. Options are "age", "HPV16" and "cytology".}
+\item{l2_x}{A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
 
-\item{pi_x}{A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease). Options are "age", "HPV16" and "cytology".}
+\item{pi_x}{A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease). Options are "age", "age.std","hpv" and "cyt".}
 
 \item{params}{Numerical vector the parameter values to be used in the data simulation (first value is background risk, then l1, l2, pi)}
 
