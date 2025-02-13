@@ -4,25 +4,10 @@
 \alias{PICmodel.predict}
 \title{Make predictions from the prevalence-incidence-cure model}
 \usage{
-PICmodel.predict(
-  l1_x,
-  l2_x,
-  pi_x,
-  data,
-  time.points,
-  fit,
-  calc.CI = F,
-  include.h = T
-)
+PICmodel.predict(data, time.points, fit, calc.CI = F, include.h = T)
 }
 \arguments{
-\item{l1_x}{A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter (must match column name(s) in the input data)}
-
-\item{l2_x}{A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter (must match column name(s) in the input data)}
-
-\item{pi_x}{A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease) (must match column name(s) in the input data)}
-
-\item{data}{Data set of covariates from which to make the predictions.}
+\item{data}{Data set of covariates from which to make the predictions. Must contain columns that correspond to covariates used in `fit`.}
 
 \item{time.points}{Numeric vector of time points used to make cumulative risk predictions}
 
