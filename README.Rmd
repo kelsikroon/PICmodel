@@ -48,8 +48,8 @@ This is a basic example in a setting without covariates which illustrates how to
 
 ```{r example, messages=F, warning=F, out.width='50%',fig.align='center'}
 library(PICmodel)
-sim.thetas <- c(-5, -1.6, -1.2, 0.25)
-sim.dat <- PICmodel.simulator(3000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+sim.thetas <- c(-5, -1.6, -1.2, -3)
+sim.dat <- PICmodel.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
 
 sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
@@ -69,7 +69,7 @@ To add covariates to the model we specify them separately for the progression, c
 ```{r example2, messages=F, warning=F, out.width='50%',fig.align='center'}
 
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
-sim.dat2 <- PICmodel.simulator(5000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
+sim.dat2 <- PICmodel.simulator(1000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
 
 sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
