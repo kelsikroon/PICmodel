@@ -54,21 +54,21 @@ library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, -3)
 sim.dat <- PICmodel.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
-#>       left     right z      age     age.std hpv cyt cause      actual
-#> 1 23.93008       Inf 0 39.20837 -0.46567478   0   1     3  25.3322721
-#> 2 23.70617       Inf 0 49.35929 -0.01966284   0   0     3 213.1513153
-#> 3  0.00000  2.870138 0 65.08876  0.67146005   0   1     2   0.1278914
-#> 4 15.05163 18.121568 0 47.19246 -0.11486908   0   0     3  15.6220568
-#> 5  0.00000  0.000000 1 69.03762  0.84496557   0   0     1   0.0000000
-#> 6 23.76392       Inf 0 42.57620 -0.31769854   1   0     3 346.0784502
+#>        left     right z      age    age.std hpv cyt cause      actual
+#> 1 20.958787       Inf 0 52.84289  0.1031094   1   0     3 983.0845280
+#> 2  0.000000  6.239495 0 55.11465  0.1997830   1   1     2   3.6913789
+#> 3 24.157009       Inf 0 32.87648 -0.7465480   0   1     3  58.2826670
+#> 4 24.139272       Inf 0 40.08313 -0.4398735   0   1     3 452.5952674
+#> 5  0.000000  3.420154 0 56.78090  0.2706892   0   1     2   0.4380654
+#> 6  8.751095 12.161086 0 60.18916  0.4157253   1   0     3   9.3888763
 
 sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -4.9354  0.1462 -5.2220 -4.6489
-#> g0 intercept   -1.6305  0.0849 -1.7969 -1.4641
-#> w0 intercept   -1.1896  0.1005 -1.3865 -0.9926
-#> p0 intercept   -3.1413  0.1693 -3.4732 -2.8095
+#> h          h   -4.6724  0.1255 -4.9184 -4.4265
+#> g0 intercept   -1.5026  0.0829 -1.6651 -1.3401
+#> w0 intercept   -1.1412  0.0981 -1.3335 -0.9489
+#> p0 intercept   -3.3329  0.1851 -3.6957 -2.9701
 
 sim.predict <- PICmodel.predict(data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
@@ -76,7 +76,7 @@ library(survival) # compare model fit to non-parametric Kaplan-Meier curve
 sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
 
 # plot PICmodel predictions and KM-curve to compare 
-plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0.2, 0.65))
+plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR')
 lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
 
@@ -92,23 +92,23 @@ as a covariate for prevalence then we would d the following:
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
 sim.dat2 <- PICmodel.simulator(1000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
-#>       left    right  z      age    age.std hpv cyt cause      actual
-#> 1  0.00000 3.020843 NA 59.68263  0.3822252   0   0     2   2.3822729
-#> 2 23.88299      Inf  0 68.78988  0.7748872   0   1     3  56.6994288
-#> 3 24.17573      Inf  0 32.31065 -0.7979259   0   0     3  93.5257920
-#> 4 23.49904      Inf  0 68.91464  0.7802662   0   1     3 326.3057599
-#> 5 24.47878      Inf  0 65.31513  0.6250723   1   0     3 186.9925219
-#> 6  0.00000 3.207084  0 63.81941  0.5605839   1   0     2   0.2103087
+#>       left   right z      age     age.std hpv cyt cause     actual
+#> 1  0.00000 3.29315 0 32.60925 -0.75071887   1   0     2   0.342287
+#> 2  0.00000 0.00000 1 50.28429  0.01579363   0   1     1   0.000000
+#> 3 24.20113     Inf 0 36.72282 -0.57232613   0   0     3 362.487660
+#> 4  0.00000 0.00000 1 30.15812 -0.85701690   0   1     1   0.000000
+#> 5  0.00000 0.00000 1 46.04396 -0.16809635   0   1     1   0.000000
+#> 6  0.00000 0.00000 1 46.10376 -0.16550329   0   1     1   0.000000
 
 sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
 sim.fit2$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -4.9675  0.1894 -5.3387 -4.5963
-#> g0 intercept   -1.4729  0.1089 -1.6864 -1.2595
-#> g1       hpv    0.8566  0.1513  0.5601  1.1532
-#> w0 intercept   -1.2013  0.1154 -1.4275 -0.9751
-#> p0 intercept   -3.2644  0.2329 -3.7209 -2.8079
-#> p1       cyt    4.4758  0.2622  3.9619  4.9897
+#> h          h   -4.9112  0.1862 -5.2762 -4.5463
+#> g0 intercept   -1.4311  0.1133 -1.6532 -1.2090
+#> g1       hpv    0.9781  0.1545  0.6753  1.2809
+#> w0 intercept   -1.1209  0.1235 -1.3629 -0.8788
+#> p0 intercept   -3.0578  0.2126 -3.4745 -2.6411
+#> p1       cyt    4.0741  0.2404  3.6029  4.5453
 
 sim.predict2 <- PICmodel.predict(data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)

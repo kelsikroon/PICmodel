@@ -61,7 +61,7 @@ library(survival) # compare model fit to non-parametric Kaplan-Meier curve
 sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
 
 # plot PICmodel predictions and KM-curve to compare 
-plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR', ylim=c(0.2, 0.65))
+plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR')
 lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
 
