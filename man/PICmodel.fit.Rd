@@ -9,14 +9,14 @@ PICmodel.fit(
   l2_x = c(),
   pi_x = c(),
   data,
-  epsilon = 1e-08,
+  epsilon = 1e-06,
   short.epsilon = 0.1,
   short.iter = 10,
   short.runs = 20,
   silent = T,
   init = NULL,
   include.h = T,
-  two.step.h = T,
+  starting.h = -12,
   include.priors = T,
   prior.type = "cauchy",
   fixed.h = NULL,
@@ -46,19 +46,19 @@ PICmodel.fit(
 
 \item{short.runs}{Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 20}
 
-\item{silent}{Indicator variable for whether to print results to console during iterations. Default value set to FALSE.}
+\item{silent}{Indicator variable for whether to print results to console during iterations. Defaults to FALSE.}
 
 \item{init}{Option to supply initial values instead of starting from random values in the model fit procedure. Defaults to NULL.}
 
 \item{include.h}{Indicator variable for whether to include background risk in the model or not. Defaults to TRUE.}
 
-\item{two.step.h}{Indicator variable for whether to perform a two-step procedure to obtain initial values when background risk is included. Defaults to TRUE.}
+\item{starting.h}{Option to supply a value for an initial value of background risk in the model. Defaults to -12 (on the log-scale).}
 
 \item{include.priors}{Indicator variable for whether to include priors in the estimation procedure. Defaults to TRUE.}
 
 \item{prior.type}{Choice of prior, either "Cauchy" or "t4" (for a t-distribution prior with 4 degrees of freedom) prior. Defaults to the weakly informative Cauchy prior.}
 
-\item{fixed.h}{Option to supply a fixed value of background risk, in which case it is treated as fixed and not included in parameter estimation and summary statistics. Needs to be on the log scale, e.g., background risk of 0.01 will use $log(0.01) = 4.6$ as input. Defaults to NULL.}
+\item{fixed.h}{Option to supply a fixed value of background risk, in which case it is treated as fixed and not included in parameter estimation and summary statistics. Needs to be on the log scale, e.g., background risk of 0.01 will use $log(0.01) = -4.6$ as input. Defaults to NULL.}
 
 \item{intercept.prog}{Indicator variable for whether a general intercept is estimated for the progression parameter. Used when adding country/study specific dummy variables instead. Defaults to TRUE.}
 

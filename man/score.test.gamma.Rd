@@ -4,7 +4,7 @@
 \alias{score.test.gamma}
 \title{Gamma Score test}
 \usage{
-score.test.gamma(fit, dh, accuracy, data)
+score.test.gamma(fit, dh = 1e-05, accuracy = 4, data)
 }
 \arguments{
 \item{fit}{Output from model fit.}
