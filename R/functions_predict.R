@@ -3,12 +3,11 @@
 #' @param time.points Numeric vector of time points used to make cumulative risk predictions
 #' @param fit Parameter estimates for the model to be used (output from model.fit)
 #' @param calc.CI Indicator variable for whether confidence intervals for the cumulative risk should be calculated. Defaults to FALSE.
-#' @param include.h Indicator variable for whether background risk was included in the model fitting procedure. Defaults to TRUE
 #' @return The output is a list for each unique combination of covariates used in the model containing the time points, the cumulative risk estimate along with the upper and lower 95% confidence intervals.
 #'
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-PICmodel.predict <- function(data, time.points, fit, calc.CI=F, include.h=T){
+PICmodel.predict <- function(data, time.points, fit, calc.CI=F){
   model <- fit$model
   l1_x <- model[[1]]
   l2_x <- model[[2]]
@@ -17,6 +16,8 @@ PICmodel.predict <- function(data, time.points, fit, calc.CI=F, include.h=T){
   if (is.null(l1_x)) l1_x <- c()
   if (is.null(l2_x)) l2_x <- c()
   if (is.null(pi_x)) pi_x <- c()
+
+  include.h <- ifelse("h" %in% rownames(fit$summary), T, F)
 
   g <- function(l1, l2, t){
     return(l1 / (l1 + l2) * (1 - exp(-(l1 + l2)* t)))

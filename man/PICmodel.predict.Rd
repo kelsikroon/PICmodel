@@ -4,7 +4,7 @@
 \alias{PICmodel.predict}
 \title{Make predictions from the prevalence-incidence-cure model}
 \usage{
-PICmodel.predict(data, time.points, fit, calc.CI = F, include.h = T)
+PICmodel.predict(data, time.points, fit, calc.CI = F)
 }
 \arguments{
 \item{data}{Data set of covariates from which to make the predictions. Must contain columns that correspond to covariates used in `fit`.}
@@ -14,8 +14,6 @@ PICmodel.predict(data, time.points, fit, calc.CI = F, include.h = T)
 \item{fit}{Parameter estimates for the model to be used (output from model.fit)}
 
 \item{calc.CI}{Indicator variable for whether confidence intervals for the cumulative risk should be calculated. Defaults to FALSE.}
-
-\item{include.h}{Indicator variable for whether background risk was included in the model fitting procedure. Defaults to TRUE}
 }
 \value{
 The output is a list for each unique combination of covariates used in the model containing the time points, the cumulative risk estimate along with the upper and lower 95% confidence intervals.
