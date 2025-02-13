@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-This `R` package fits prevalence-incidence-cure (PIC) models to interval-censored data to estimate the cumulative disease risk in a population with a temporarily elevated risk of disease, e.g., risk of CIN2+ in HPV-positive women. 
+This `R` package fits prevalence-incidence-clearance (PIC) models to interval-censored data to estimate the cumulative disease risk in a population with a temporarily elevated risk of disease, e.g., risk of CIN2+ in HPV-positive women. 
 
 In longitudinal screening studies it is possible to observe prevalent, early or late events during follow-up. In our model, early events are modelled via a competing risks framework, infections either progress to the disease state or to a (latent) “cure” state (i.e. viral clearance) at constant rates. Late events are modelled by adding background risk to the model. Parameters can depend on individual risk factors and are estimated with an expectation-maximisation (EM) algorithm with weakly informative Cauchy priors. More details are given in the accompanying paper: *eventual link to paper*.
 
@@ -55,7 +55,7 @@ head(sim.dat) # view simulated data
 sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 
-sim.predict <- PICmodel.predict(c(), c(), c(), data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
+sim.predict <- PICmodel.predict(data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
 library(survival) # compare model fit to non-parametric Kaplan-Meier curve 
 sim.km.fit <- survfit(Surv(sim.dat$left, sim.dat$right, type='interval2')~1)
@@ -75,7 +75,7 @@ head(sim.dat2) # view simulated data
 sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
 sim.fit2$summary # view model fit summary
 
-sim.predict2 <- PICmodel.predict(c("hpv"), c(), c("cyt"), data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
+sim.predict2 <- PICmodel.predict(data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)
 
 # compare model fit to non-parametric Kaplan-Meier curve 
@@ -105,11 +105,7 @@ legend("bottomright",
          col=c("darkblue", "darkgreen", "deeppink2", "darkorange3"), lty=1, lwd=2, bty = "n", cex=0.75)
 ```
 
-## Upcoming 
-
-- update model predict functions to allow for model fits where the general intercept was not estimated. 
-- update Gamma simulator functions to allow for covariates 
 
 ## Authors
 
-- **Kelsi Kroon** k.kroon@amsterdamumc.nl
+- **Kelsi R. Kroon** k.kroon@amsterdamumc.nl
