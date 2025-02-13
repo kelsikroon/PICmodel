@@ -16,7 +16,7 @@
 #' @param short.iter Number of max iterations used in one run of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 10
 #' @param short.epsilon Convergence criteria used in the 'Short' EM algorithm to determine initial values. Defaults to 0.1.
 #' @param epsilon Convergence criteria for the change in log-likelihood value used for stopping the EM algorithm. Defaults to 1e-08.
-#' @param silent Indicator variable for whether to print results to console during iterations. Default value set to FALSE.
+#' @param silent Indicator variable for whether to print results to console during iterations. Defaults to FALSE.
 #' @param init Option to supply initial values instead of starting from random values in the model fit procedure. Defaults to NULL.
 #' @param include.h Indicator variable for whether to include background risk in the model or not. Defaults to TRUE.
 #' @param starting.h Option to supply a value for an initial value of background risk in the model. Defaults to -12 (on the log-scale).
