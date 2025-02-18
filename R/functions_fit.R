@@ -48,7 +48,7 @@
 PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL,
                          include.h=T, starting.h = -12, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
   if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
-  sapply(c("Rlab", "dplyr"), require, character.only = TRUE)
+  #sapply(c( "dplyr"), require, character.only = TRUE)
 
   # g(): the competing risks function used in the 'incidence' part of the mixture model
   g <- function(l1, l2, t){
@@ -407,12 +407,15 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, s
       old_llk <- new_llk
       next_em_step <- mstep.h(current_theta, estep.h(current_theta, data, include.h, est.h, fixed.h=fixed.h), data, include.h, est.h, fixed.h=fixed.h)
       new_theta <- as.vector(next_em_step[[1]])
+      if (inherits(new_theta, 'try-error')) stop("Numerical error. Possibly due to sample size too small, shape parameter too large, or bad initial values. Try re-starting the algorithm for new starting values, or check simulated data.")
+
       new_llk <- log.likelihood.h(new_theta, data, include.h, est.h, fixed.h=fixed.h)
       if (!silent & (iter %/% 10 ==0 | iter %% 10 ==0)) print(round(c(new_theta, new_llk), 4))
       iter <- iter + 1
       if (iter > 1000){
         break
       }
+
     }
     hess <- numerical.hess(new_theta, data, include.h, est.h, fixed.h) # calculate numerical hessian at current theta to return SD of model parameters
     names(new_theta) <- pars
@@ -478,17 +481,28 @@ PICmodel.fit <- function(l1_x = c(), l2_x= c(), pi_x=c(), data, epsilon=1e-06, s
     ncols <- ncol(short.inits.mat)
 
     # find the set of parameter values that results in the maximum likelihood
-    init.counts <- cbind(round(short.inits.mat[rev(order(short.inits.mat[,ncols])),1:(ncols-1)],1),
-                         round(short.inits.mat[rev(order(short.inits.mat[,ncols])),ncols])) %>%
-      data.frame()%>% group_by_all() %>% dplyr::count() %>% as.data.frame()
+
+    # remove dplyr solution for general consumption
+    # init.counts <- cbind(round(short.inits.mat[rev(order(short.inits.mat[,ncols])),1:(ncols-1)],1),
+    #                      round(short.inits.mat[rev(order(short.inits.mat[,ncols])),ncols])) %>%
+    #   data.frame()%>% group_by_all() %>% dplyr::count() %>% as.data.frame()
+    init.values <- data.frame(cbind(round(short.inits.mat[rev(order(short.inits.mat[,ncols])),1:(ncols-1)],1),
+                                    round(short.inits.mat[rev(order(short.inits.mat[,ncols])),ncols])))
+    init.counts <- aggregate(cbind(init.values[0],n=1), init.values, length)
 
     if (all(init.counts$n==1)){
       # if there are no repeated starting values, we take the one with the highest likelihood
       inits <- short.inits.mat[which.max(short.inits.mat[,dim(short.inits.mat)[2]]),1:(dim(short.inits.mat)[2]-1)]
     }else{
       # of the starting values which are repeated more than once, take the one with the highest likelihood
-      inits <- init.counts %>% arrange(., n) %>% filter(n > 1) %>% slice_max(n=1, order_by = get(noquote(paste0("X", ncols)))) %>% head(1) %>% as.numeric() %>% head(-2)
+      repeated_rows <- init.counts[init.counts[, ncols + 1] > 1, ]
+      max_likelihood_index <- which.max(repeated_rows[, ncols])
+      inits <- as.numeric(repeated_rows[max_likelihood_index, 1:(ncols - 1)])
+
+      # remove dplyr solution for general consumption
+      # inits <- init.counts %>% arrange(., n) %>% filter(n > 1) %>% slice_max(n=1, order_by = get(noquote(paste0("X", ncols)))) %>% head(1) %>% as.numeric() %>% head(-2)
     }
+
     if (any(inits ==0)){
       inits[inits==0] <- 0.001
     }
