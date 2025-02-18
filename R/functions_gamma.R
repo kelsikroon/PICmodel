@@ -1,14 +1,14 @@
 #' Gamma Simulator
 #'
 #' Function to simulate data for a variant of our model that uses the Gamma distribution for Cause 1 (i.e., progression) in the competing risks framework used for incident disease. Note this code is simplified to not include covariates
-#' @param n Number of subjects requried in simulated data set
-#' @param params Parameter values for simple model without covariates. Note that parameters go in order (1) background risk, (2) lambda_1, (3), lambda_2, and (4) prevalent).
-#' @param k Shape parameter for gamma distribution
-#' @param interval Screening interval (in years). Defaults to 3.
-#' @param include.h Indicator variable for whether to include background risk or not. Defaults to TRUE.
+#' @param n Number of subjects required in simulated data set
+#' @param params Parameter values for simple model without covariates. Note that parameters go in order (1) background risk, (2) \eqn{\lambda_1}, (3), \eqn{\lambda_2}, and (4) prevalent probability \eqn{\pi}).
+#' @param k Shape parameter for gamma distribution, defaults to 2. Note that higher values may give numerical problems, particularly for small sample sizes.
+#' @param interval Screening interval (in years), defaults to 3.
+#' @param include.h Indicator variable for whether to include background risk or not, defaults to TRUE.
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
-simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
+simulator.gamma <- function(n, params, k = 2, interval=3, include.h=T){
   show_prob <- 0.8
   h <- exp(params[1])
   l1 <- exp(params[2])
@@ -53,33 +53,6 @@ simulator.gamma <- function(n, params,  k, interval=3, include.h=T){
   else {
     screens <- apply(screening_times, 1, function(x) c(na.omit(unlist(x, use.names=FALSE))))
   }
-
-
-  # create a list of the screening times with NA values removed for each subject
-  # #screens <- lapply(seq(1, n), function(x) unlist((screening_times)[x,] ))
-  # screens <- apply(screening_times, 1, function(x) c(na.omit(unlist(x, use.names=FALSE))))
-  # # create left intervals by finding the last value in the list of screens that is smaller than the actual event time ß
-  # left <- vapply(screens, function(x) x[Position(function(z) z <= x[length(x)], x[c(1:(length(x))-1)], right=TRUE)], 1)
-  # z[is.na(left)] <- NA # if left interval is NA then disease was unknown at baseline because it was not checked
-  # left[is.na(left)] <- 0 # set unknown left intervals to 0 because CIN2/3 could have been there at baseline
-  #
-  # # create a list of right intervals by finding the first value in the list of screen times that is greater than the actual event time
-  # right <- vapply(screens, function(x) x[Position(function(z) z > x[length(x)], x[c(1:(length(x))-1)])], 1)
-  #
-  # # if the actual event time t=0 and left interval l=0 and the indicator is not unknown
-  # # (meaning disease was checked at baseline), then the right interval is also zero
-  # right[left==0 & t==0 & !is.na(z)] <-  0
-  # z[which(right==0)] <- 1 # right is only zero when disease is prevalent (defined above)
-  #
-  # # if the actual time of CIN2/3 development is after the last screening time, then the set the time to Inf
-  # last_screening_time <- vapply(screens, function(x) tail(x, 2)[1], 1)
-  # right[screening_times$actual > last_screening_time] <- Inf
-  #
-  # # if the right interval is NA then set it to infinity - this happens if all screening
-  # # rounds were NA (very rare, this is just to avoid errors in case it happens)
-  # right[is.na(right)] <- Inf
-
-
   z <- rep(0, n) # create the indicator variable Z
 
   # create left intervals by finding the last value in the list of screens that is smaller than the actual event time
