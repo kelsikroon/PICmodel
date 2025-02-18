@@ -12,13 +12,14 @@ PICmodel.simulator(
   params,
   show_prob = 0.9,
   interval = 3,
-  include.h = T
+  include.h = T,
+  covar_settings = c(age.min = 30, age.max = 70, cyt.prob = 0.4, hpv16.prob = 0.3)
 )
 }
 \arguments{
 \item{n}{Number of women in the simulated data set.}
 
-\item{l1_x}{A vector containing the names of covariates used in the \ifelse{html}{\out{\eqn{\lambda}<sub>1</sub>}}{ \eqn{\lambda_1}} (progression rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
+\item{l1_x}{A vector containing the names of covariates used in the \eqn{\lambda_1} (progression rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
 
 \item{l2_x}{A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
 
@@ -31,6 +32,8 @@ PICmodel.simulator(
 \item{interval}{A value representing the interval between screening rounds (in years). Defaults to 3.}
 
 \item{include.h}{Indicator variable for whether to background risk in the simulation procedure. Defaults to TRUE.}
+
+\item{covar_settings}{A vector of settings used to generate covariate values for age, abnormal cytology and HPV16 genotype. They must be supplied in the order age minimum, age maximum, abnormal cytology probability and HPV16 probability. Age is generated uniformly between `age.min` and `age.max`, with default values of 30 and 70 years respectively. Abnormal cytology is generated from a Bernoulli distribution with probability `cyt.prop`, with default probability of 0.4. HPV16 is also generated from a Bernoulli distribution with probability `hpv16.prob', which defaults to 0.3.}
 }
 \value{
 A data frame containing the left and right interval of CIN2+ detection, the indicator of prevalent disease, age (continuous), HPV genotype (HPV16 or other, 1=HPV16), and cytology result (normal or abnormal, 1=abnormal).

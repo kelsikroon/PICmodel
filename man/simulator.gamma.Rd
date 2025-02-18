@@ -4,18 +4,18 @@
 \alias{simulator.gamma}
 \title{Gamma Simulator}
 \usage{
-simulator.gamma(n, params, k, interval = 3, include.h = T)
+simulator.gamma(n, params, k = 2, interval = 3, include.h = T)
 }
 \arguments{
-\item{n}{Number of subjects requried in simulated data set}
+\item{n}{Number of subjects required in simulated data set}
 
-\item{params}{Parameter values for simple model without covariates. Note that parameters go in order (1) background risk, (2) lambda_1, (3), lambda_2, and (4) prevalent).}
+\item{params}{Parameter values for simple model without covariates. Note that parameters go in order (1) background risk, (2) \eqn{\lambda_1}, (3), \eqn{\lambda_2}, and (4) prevalent probability \eqn{\pi}).}
 
-\item{k}{Shape parameter for gamma distribution}
+\item{k}{Shape parameter for gamma distribution, defaults to 2. Note that higher values may give numerical problems, particularly for small sample sizes.}
 
-\item{interval}{Screening interval (in years). Defaults to 3.}
+\item{interval}{Screening interval (in years), defaults to 3.}
 
-\item{include.h}{Indicator variable for whether to include background risk or not. Defaults to TRUE.}
+\item{include.h}{Indicator variable for whether to include background risk or not, defaults to TRUE.}
 }
 \description{
 Function to simulate data for a variant of our model that uses the Gamma distribution for Cause 1 (i.e., progression) in the competing risks framework used for incident disease. Note this code is simplified to not include covariates

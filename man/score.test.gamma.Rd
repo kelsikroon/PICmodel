@@ -22,7 +22,7 @@ The output is a list containing the following elements:
 \item inv.hess: value of the inverse hessian at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
 \item hess: value of the hessian at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
 \item loglik: value of the log-likelihood at the shape parameter equal to 1 and the rest of the parameters at their maximum likelihood estimates.
-\item p.val: p-value of the score test for whether Cause 1 follows a Gamma rather than Exponential distribution (tests whether shape parameter equals 1 or not).
+\item p.val: p-value of the score test for whether Cause 1 follows a Gamma rather than Exponential distribution (tests whether shape parameter equals 1 under \eqn{H_0} or not).
 }
 }
 \description{
