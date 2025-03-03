@@ -5,16 +5,16 @@
 \title{Fit the prevalence-incidence-clearance model}
 \usage{
 PICmodel.fit(
-  l1_x = c(),
-  l2_x = c(),
-  pi_x = c(),
   data,
+  prog_model = "prog ~ 1",
+  prev_model = "prev ~ 1",
   epsilon = 1e-06,
   short.epsilon = 0.1,
   short.iter = 10,
   short.runs = 20,
   silent = T,
   init = NULL,
+  max.iter = 1000,
   include.h = T,
   starting.h = -12,
   include.priors = T,
@@ -26,17 +26,15 @@ PICmodel.fit(
 )
 }
 \arguments{
-\item{l1_x}{A vector containing the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Can be left blank for empty model.}
-
-\item{l2_x}{A vector containing the names of covariates used in the clearance rate parameter (must match column name(s) in the input data). Can be left blank for empty model.}
-
-\item{pi_x}{A vector containing the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Can be left blank for empty model.}
-
-\item{data}{Data used to fit the model containing columns for each term in l1_x, l2_x and pi_x. The first three columns must be: \itemize{
+\item{data}{Data used to fit the model containing columns for each term in l1_x and pi_x. The first three columns must be: \itemize{
 \item left interval giving the last time a patient was seen without the disease
 \item right interval giving the first time a patient was seen with the disease (can be Inf for right-censored cases)
 \item z indicator for prevalent/incident disease. The data must contain observed prevalent (z=1) and incident (z=0) cases, however some cases may be set to unknown (i.e., z=`NA`) for instance if there were no visits between baseline and disease detection.
 }}
+
+\item{prog_model}{A string in the format "prog ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Defaults to "prog ~ 1", which is an intercept only model (i.e., without covariates).}
+
+\item{prev_model}{A string in the format "prev ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Defaults to "prev ~ 1", which is an intercept only model (i.e., without covariates).}
 
 \item{epsilon}{Convergence criteria for the change in log-likelihood value used for stopping the EM algorithm. Defaults to 1e-08.}
 
@@ -46,9 +44,11 @@ PICmodel.fit(
 
 \item{short.runs}{Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 20}
 
-\item{silent}{Indicator variable for whether to print results to console during iterations. Defaults to FALSE.}
+\item{silent}{Indicator variable for whether to print results to console during iterations. Defaults to FALSE. Results print in order: (1) background risk (if used), (2) progression model, (3) clearance model, (4) prevalence model, and (5) log-likelihood. Parameters are on the log-scale, except for prevalence which is on the logit scale.}
 
 \item{init}{Option to supply initial values instead of starting from random values in the model fit procedure. Defaults to NULL.}
+
+\item{max.iter}{Number of maximum iterations used in the final run of the EM algorithm. Defaults to 1000.}
 
 \item{include.h}{Indicator variable for whether to include background risk in the model or not. Defaults to TRUE.}
 
@@ -69,7 +69,7 @@ PICmodel.fit(
 \value{
 The output is a list containing the following elements:
 \itemize{
-\item `model`: list containing names of covariates used for each parameter
+\item `model`: list containing names of covariates used for progression and prevalence parameter
 \item `initial.values`: either the initial values determined by the Short EM algorithm process or the supplied initial values
 \item `fixed.h`: the fixed value of background risk if supplied, otherwise NULL
 \item `theta.hat`: optimum parameter values estimated by the EM algorithm
@@ -78,7 +78,8 @@ The output is a list containing the following elements:
 \item `hess`: hessian matrix at the maximum likelihood estimates
 \item `grad`: value of the gradient vector at the the maximum likelihood estimates
 \item `std.dev`: standard deviation of parameter estimates
-\item `summary`: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `g0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
+\item `convergence`: indicator variable for whether the algorithm converged or reached maximum number of iterations. If FALSE, try with higher max.iter, smaller epsilon or different starting values.
+\item `summary`: data frame with estimate, std.dev, and 95\% CI for each parameter (useful for data set comparisons). Parameters that start with `g` (i.e., `g0`, `g1`...) are for the progression model, those that start with `w` (i.e., `w0`) are for the clearance model, and those start with `p` (i.e., `p0`, `p1`...) are for the prevalence model. Progression and clearance parameters are on the log scale, prevalence parameters are on logit scale.
 }
 }
 \description{
