@@ -4,9 +4,9 @@
 #' This function fits our Prevalence-Incidence-Clearance (PIC) mixture model to interval-censored screening data and obtains parameter estimates.
 #' It is possible for the user to select the covariates that will be used for each parameter.
 #'
+#' @param data Data used to fit the model containing columns for each term in l1_x and pi_x. The first three columns must be: \itemize{
 #' @param prog_model A string in the format "prog ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Defaults to "prog ~ 1", which is an intercept only model (i.e., without covariates).
 #' @param prev_model A string in the format "prev ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Defaults to "prev ~ 1", which is an intercept only model (i.e., without covariates).
-#' @param data Data used to fit the model containing columns for each term in l1_x and pi_x. The first three columns must be: \itemize{
 #' \item left interval giving the last time a patient was seen without the disease
 #' \item right interval giving the first time a patient was seen with the disease (can be Inf for right-censored cases)
 #' \item z indicator for prevalent/incident disease. The data must contain observed prevalent (z=1) and incident (z=0) cases, however some cases may be set to unknown (i.e., z=`NA`) for instance if there were no visits between baseline and disease detection.
@@ -44,7 +44,7 @@
 #' @export
 #'
 #' @examples
-#' fit <- PICmodel.fit(c(), c(), c(), sim.dat)
+#' fit <- PICmodel.fit(sim.dat)
 #' fit$summary
 PICmodel.fit <- function(data, prog_model = 'prog ~ 1', prev_model='prev ~ 1', epsilon=1e-06, short.epsilon=1e-1, short.iter=10, short.runs=20, silent=T,  init=NULL, max.iter = 1000,
                          include.h=T, starting.h = -12, include.priors=T, prior.type = 'cauchy', fixed.h=NULL, intercept.prog = T, intercept.clear = T, intercept.prev=T){
@@ -71,14 +71,14 @@ PICmodel.fit <- function(data, prog_model = 'prog ~ 1', prev_model='prev ~ 1', e
     if (any(!c(l1_x, l2_x, pi_x) %in% colnames(data))) stop("Covariate is not a column name in input data set. Please check")
 
     # check that there are no NA/NaN values in the data and only use complete cases if there are
-    if (! all(complete.cases(pobData[-3]))){
-      data <- which(complete.cases(data[,-3])) # exclude 'z' variable since this is allowed to have NA values for unknown prevalence
+    if (! all(complete.cases(data[-3]))){
+      data <- data[which(complete.cases(data[,-3])),] # exclude 'z' variable since this is allowed to have NA values for unknown prevalence
       warning("Some columns with covariates contain NA or NaN values, only complete data will be used in estimation.")
     }
 
     # check that z values are only NA, 0, or 1 (not 2 or other numerical values), otherwise filter
-    if (any(!data$z %in% c(1, 0,NA))){
-      data <- data[which(z %in% c(0, 1, NA)),]
+    if (any(!data[[3]] %in% c(1, 0,NA))){
+      data <- data[which(data[[3]] %in% c(0, 1, NA)),]
       warning("Prevalence indicator column contained values other than 0, 1, or NA. Only complete data will be used in estimation.")
     }
 

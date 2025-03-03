@@ -9,10 +9,9 @@ NULL
 #' data with the baseline covariates age (continuous between 30 and 70), HPV genotype (HPV16 positive or negative), and cytology (normal/ abnormal).
 #'
 #' @param n Number of women in the simulated data set.
-#' @param l1_x A vector containing the names of covariates used in the \eqn{\lambda_1} (progression rate) parameter. Options are "age", "age.std", "hpv" and "cyt".
-#' @param l2_x A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter. Options are "age", "age.std", "hpv" and "cyt".
-#' @param pi_x A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease). Options are "age", "age.std","hpv" and "cyt".
-#' @param params Numerical vector the parameter values to be used in the data simulation (first value is background risk, then l1, l2, pi)
+#' @param prog_model A string in the format "prog ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Defaults to "prog ~ 1", which is an intercept only model (i.e., without covariates).
+#' @param prev_model A string in the format "prev ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Defaults to "prev ~ 1", which is an intercept only model (i.e., without covariates).
+#' @param params Numerical vector the parameter values to be used in the data simulation (first value is background risk, then l1, l2, pi), including the values of the covariates.
 #' @param show_prob A value representing the probability of a woman showing up for the screening visit. Defaults to 0.9.
 #' @param interval A value representing the interval between screening rounds (in years). Defaults to 3.
 #' @param include.h Indicator variable for whether to background risk in the simulation procedure. Defaults to TRUE.
@@ -21,9 +20,9 @@ NULL
 #' @author Kelsi Kroon, Hans Bogaards, Hans Berkhof
 #' @export
 #' @examples
-#' sim.df <- PICmodel.simulator(1000, c("hpv"), c(), c(),  c(-5, -1.6, 1, -1.2, 0.25), show_prob = 0.9, interval=3, include.h=T)
+#' sim.df <- PICmodel.simulator(1000, prog_model = "prog ~ hpv",  c(-5, -1.6, 1, -1.2, 0.25), show_prob = 0.9, interval=3, include.h=T)
 #' head(sim.df)
-PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, interval=3, include.h=T, covar_settings = c(age.min = 30, age.max = 70, cyt.prob = 0.4, hpv16.prob = 0.3)){
+PICmodel.simulator <- function(n, prog_model = "prog ~ 1", prev_model = "prev ~ 1", params, show_prob = 0.9, interval=3, include.h=T, covar_settings = c(age.min = 30, age.max = 70, cyt.prob = 0.4, hpv16.prob = 0.3)){
   age <- runif(n, covar_settings[1], covar_settings[2])
   age.std <- 0.5*(age - mean(age))/sd(age)
 
@@ -33,6 +32,21 @@ PICmodel.simulator <- function(n, l1_x, l2_x, pi_x, params, show_prob = 0.9, int
 
   # HPV genotype (HPV 16 or other) - this is an indicator variable so 1 means they have HPV16 and 0 means other HPV type
   hpv <- rbinom(n, 1, covar_settings[4])
+
+  # model covariates:
+  l2_x <- c() # no covariates for clearance/cure
+
+  if (prog_model == 'prog ~ 1'){
+    l1_x <- c() # null model without covariates
+  }else{
+    l1_x <- trimws(strsplit(substr(prog_model, 8, nchar(prog_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+  }
+
+  if (prev_model == 'prev ~ 1'){
+    pi_x <- c() # null model without covariates
+  }else{
+    pi_x <- trimws(strsplit(substr(prev_model, 8, nchar(prev_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+  }
 
   create.covariate.data <- function(data){
     data[['intercept']] <- rep(1, length(dim(data)[1]))

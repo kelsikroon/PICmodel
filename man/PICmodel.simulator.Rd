@@ -6,9 +6,8 @@
 \usage{
 PICmodel.simulator(
   n,
-  l1_x,
-  l2_x,
-  pi_x,
+  prog_model = "prog ~ 1",
+  prev_model = "prev ~ 1",
   params,
   show_prob = 0.9,
   interval = 3,
@@ -19,13 +18,11 @@ PICmodel.simulator(
 \arguments{
 \item{n}{Number of women in the simulated data set.}
 
-\item{l1_x}{A vector containing the names of covariates used in the \eqn{\lambda_1} (progression rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
+\item{prog_model}{A string in the format "prog ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Defaults to "prog ~ 1", which is an intercept only model (i.e., without covariates).}
 
-\item{l2_x}{A vector containing the names of covariates used in the \eqn{\lambda_2} (clearance rate) parameter. Options are "age", "age.std", "hpv" and "cyt".}
+\item{prev_model}{A string in the format "prev ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Defaults to "prev ~ 1", which is an intercept only model (i.e., without covariates).}
 
-\item{pi_x}{A vector containing the names of covariates used in the \eqn{\pi} parameter (probability of prevalent disease). Options are "age", "age.std","hpv" and "cyt".}
-
-\item{params}{Numerical vector the parameter values to be used in the data simulation (first value is background risk, then l1, l2, pi)}
+\item{params}{Numerical vector the parameter values to be used in the data simulation (first value is background risk, then l1, l2, pi), including the values of the covariates.}
 
 \item{show_prob}{A value representing the probability of a woman showing up for the screening visit. Defaults to 0.9.}
 
@@ -43,7 +40,7 @@ Simulates screening data with user-specified parameters loosely based on the exa
 data with the baseline covariates age (continuous between 30 and 70), HPV genotype (HPV16 positive or negative), and cytology (normal/ abnormal).
 }
 \examples{
-sim.df <- PICmodel.simulator(1000, c("hpv"), c(), c(),  c(-5, -1.6, 1, -1.2, 0.25), show_prob = 0.9, interval=3, include.h=T)
+sim.df <- PICmodel.simulator(1000, prog_model = "prog ~ hpv",  c(-5, -1.6, 1, -1.2, 0.25), show_prob = 0.9, interval=3, include.h=T)
 head(sim.df)
 }
 \author{

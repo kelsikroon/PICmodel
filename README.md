@@ -52,23 +52,23 @@ the plot and compare to a non-parametric cumulative incidence curve:
 ``` r
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, -3)
-sim.dat <- PICmodel.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+sim.dat <- PICmodel.simulator(1000, params = sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
-#>        left     right z      age    age.std hpv cyt cause      actual
-#> 1 20.958787       Inf 0 52.84289  0.1031094   1   0     3 983.0845280
-#> 2  0.000000  6.239495 0 55.11465  0.1997830   1   1     2   3.6913789
-#> 3 24.157009       Inf 0 32.87648 -0.7465480   0   1     3  58.2826670
-#> 4 24.139272       Inf 0 40.08313 -0.4398735   0   1     3 452.5952674
-#> 5  0.000000  3.420154 0 56.78090  0.2706892   0   1     2   0.4380654
-#> 6  8.751095 12.161086 0 60.18916  0.4157253   1   0     3   9.3888763
+#>        left     right z      age     age.std hpv cyt cause      actual
+#> 1  0.000000  2.919475 0 54.31789  0.17906643   1   1     2   0.2295137
+#> 2 24.013075       Inf 0 48.43769 -0.07028581   0   0     3 524.4353027
+#> 3 23.518605       Inf 0 41.35735 -0.37053038   1   1     3 498.4729521
+#> 4 23.981820       Inf 0 59.89597  0.41560720   1   1     3 452.1208752
+#> 5  9.041048 12.277403 0 57.69026  0.32207329   1   0     3   9.2900745
+#> 6  0.000000  2.814737 0 39.78798 -0.43708017   0   1     3   1.3926755
 
-sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit <- PICmodel.fit(data=sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -4.6724  0.1255 -4.9184 -4.4265
-#> g0 intercept   -1.5026  0.0829 -1.6651 -1.3401
-#> w0 intercept   -1.1412  0.0981 -1.3335 -0.9489
-#> p0 intercept   -3.3329  0.1851 -3.6957 -2.9701
+#> h          h   -4.9205  0.1469 -5.2084 -4.6325
+#> g0 intercept   -1.5805  0.0856 -1.7483 -1.4128
+#> w0 intercept   -1.1653  0.1038 -1.3688 -0.9619
+#> p0 intercept   -3.5134  0.1972 -3.8999 -3.1269
 
 sim.predict <- PICmodel.predict(data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
 
@@ -85,30 +85,30 @@ lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 To add covariates to the model we specify them separately for the
 progression, clearance, and prevalence parameters. For example if we
 wanted to add HPV16 as a covariate for progression and abnormal cytology
-as a covariate for prevalence then we would d the following:
+as a covariate for prevalence then we would do the following:
 
 ``` r
 
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
-sim.dat2 <- PICmodel.simulator(1000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
+sim.dat2 <- PICmodel.simulator(1000, prog_model = "prog ~ hpv", prev_model = "prev ~ cyt", sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
-#>       left   right z      age     age.std hpv cyt cause     actual
-#> 1  0.00000 3.29315 0 32.60925 -0.75071887   1   0     2   0.342287
-#> 2  0.00000 0.00000 1 50.28429  0.01579363   0   1     1   0.000000
-#> 3 24.20113     Inf 0 36.72282 -0.57232613   0   0     3 362.487660
-#> 4  0.00000 0.00000 1 30.15812 -0.85701690   0   1     1   0.000000
-#> 5  0.00000 0.00000 1 46.04396 -0.16809635   0   1     1   0.000000
-#> 6  0.00000 0.00000 1 46.10376 -0.16550329   0   1     1   0.000000
+#>       left    right z      age     age.std hpv cyt cause     actual
+#> 1 23.74135      Inf 0 60.23877  0.43826010   0   1     3  98.454106
+#> 2 24.09672      Inf 0 68.94829  0.81634768   0   1     3  62.455445
+#> 3  0.00000 2.817943 0 53.68294  0.15366648   1   0     2   1.761897
+#> 4 24.04198      Inf 0 51.63299  0.06467654   1   0     3 128.166204
+#> 5 24.11061      Inf 0 36.04632 -0.61195336   0   0     3 269.388102
+#> 6  0.00000 0.000000 1 62.60351  0.54091556   0   1     1   0.000000
 
-sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
+sim.fit2 <- PICmodel.fit(sim.dat2, prog_model = "prog ~ hpv", prev_model = "prev ~ cyt") # fit model to simulated data
 sim.fit2$summary # view model fit summary
 #>        param theta.hat std.dev   lower   upper
-#> h          h   -4.9112  0.1862 -5.2762 -4.5463
-#> g0 intercept   -1.4311  0.1133 -1.6532 -1.2090
-#> g1       hpv    0.9781  0.1545  0.6753  1.2809
-#> w0 intercept   -1.1209  0.1235 -1.3629 -0.8788
-#> p0 intercept   -3.0578  0.2126 -3.4745 -2.6411
-#> p1       cyt    4.0741  0.2404  3.6029  4.5453
+#> h          h   -5.0537  0.2185 -5.4819 -4.6254
+#> g0 intercept   -1.6742  0.1105 -1.8908 -1.4577
+#> g1       hpv    0.9791  0.1510  0.6831  1.2750
+#> w0 intercept   -1.2833  0.1271 -1.5325 -1.0342
+#> p0 intercept   -2.5920  0.1702 -2.9256 -2.2584
+#> p1       cyt    3.4785  0.2039  3.0789  3.8782
 
 sim.predict2 <- PICmodel.predict(data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
                               time.points = seq(0, 15, 0.5), fit=sim.fit2)

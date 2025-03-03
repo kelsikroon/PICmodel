@@ -9,13 +9,24 @@
 #' @export
 PICmodel.predict <- function(data, time.points, fit, calc.CI=F){
   model <- fit$model
-  l1_x <- model[[1]]
-  l2_x <- model[[2]]
-  pi_x <- model[[3]]
+  prog_model <- model[[1]]
+  prev_model <- model[[2]]
 
-  if (is.null(l1_x)) l1_x <- c()
-  if (is.null(l2_x)) l2_x <- c()
-  if (is.null(pi_x)) pi_x <- c()
+  # model covariates:
+  l2_x <- c() # no covariates for clearance/cure
+
+  if (prog_model == 'prog ~ 1'){
+    l1_x <- c() # null model without covariates
+  }else{
+    l1_x <- trimws(strsplit(substr(prog_model, 8, nchar(prog_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+  }
+
+  if (prev_model == 'prev ~ 1'){
+    pi_x <- c() # null model without covariates
+  }else{
+    pi_x <- trimws(strsplit(substr(prev_model, 8, nchar(prev_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+  }
+
 
   include.h <- ifelse("h" %in% rownames(fit$summary), T, F)
 

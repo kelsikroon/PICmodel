@@ -49,10 +49,10 @@ This is a basic example in a setting without covariates which illustrates how to
 ```{r example, messages=F, warning=F, out.width='50%',fig.align='center'}
 library(PICmodel)
 sim.thetas <- c(-5, -1.6, -1.2, -3)
-sim.dat <- PICmodel.simulator(1000, c(), c(), c(), sim.thetas, show_prob = 0.9, interval=3, include.h=T)
+sim.dat <- PICmodel.simulator(1000, params = sim.thetas, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat) # view simulated data
 
-sim.fit <- PICmodel.fit(c(), c(), c(), sim.dat) # fit model to simulated data
+sim.fit <- PICmodel.fit(data=sim.dat) # fit model to simulated data
 sim.fit$summary # view model fit summary
 
 sim.predict <- PICmodel.predict(data=sim.dat[1,], time.points = seq(0, 15, 0.5), fit=sim.fit)
@@ -65,14 +65,14 @@ plot(sim.predict[[1]]$Time, sim.predict[[1]]$CR, type='l', xlab='time', ylab='CR
 lines(sim.km.fit$time, 1-sim.km.fit$surv, col='blue')
 ```
 
-To add covariates to the model we specify them separately for the progression, clearance, and prevalence parameters. For example if we wanted to add HPV16 as a covariate for progression and abnormal cytology as a covariate for prevalence then we would d the following: 
+To add covariates to the model we specify them separately for the progression, clearance, and prevalence parameters. For example if we wanted to add HPV16 as a covariate for progression and abnormal cytology as a covariate for prevalence then we would do the following: 
 ```{r example2, messages=F, warning=F, out.width='50%',fig.align='center'}
 
 sim.thetas.cov <- c(-5, -1.6, 1, -1.2, -3, 4)
-sim.dat2 <- PICmodel.simulator(1000, c("hpv"), c(), c("cyt"), sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
+sim.dat2 <- PICmodel.simulator(1000, prog_model = "prog ~ hpv", prev_model = "prev ~ cyt", sim.thetas.cov, show_prob = 0.9, interval=3, include.h=T)
 head(sim.dat2) # view simulated data
 
-sim.fit2 <- PICmodel.fit(c("hpv"), c(), c("cyt"), sim.dat2) # fit model to simulated data
+sim.fit2 <- PICmodel.fit(sim.dat2, prog_model = "prog ~ hpv", prev_model = "prev ~ cyt") # fit model to simulated data
 sim.fit2$summary # view model fit summary
 
 sim.predict2 <- PICmodel.predict(data=data.frame(hpv = c(1, 1, 0, 0), cyt=c(1, 0, 1, 0)), 
