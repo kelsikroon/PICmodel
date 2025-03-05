@@ -55,6 +55,11 @@ PICmodel.fit <- function(data, prog_model = 'prog ~ 1', prev_model='prev ~ 1', e
     # model covariates:
     l2_x <- c() # no covariates for clearance/cure
 
+    prog_model <- gsub("([~+])", " \\1 ", prog_model) # Ensure space around "~" and "+"
+    prev_model <- gsub("([~+])", " \\1 ", prev_model) # Ensure space around "~" and "+"
+
+    if (! startsWith(prev_model, "prev ~") | ! startsWith(prog_model, "prog ~"))  stop("Prevalence or progression model are not supplied in the correct format. Use 'prog ~ x1 + x2...' or 'prev ~ x1 + x2 ...' to specify covariates for progression and prevalence respectively.")
+
     if (prog_model == 'prog ~ 1'){
       l1_x <- c() # null model without covariates
     }else{
