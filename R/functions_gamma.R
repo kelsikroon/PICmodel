@@ -102,9 +102,9 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
   fixed.h <- fit$fixed.h
   n <- length(data$right)
 
-  n1 <- length(fit$model[[1]]) +1 # number of covariates for l1 (progression)
-  n2 <- length(fit$model[[2]]) +1 # number of covariates for l2 (clearance)
-  n3 <- length(fit$model[[3]]) +1 # number of covariates for pi (prevalence probability)
+  n1 <- sum(startsWith(names(fit$theta.hat), "g")) # number of covariates for l1 including intercept (progression)
+  n2 <- 1 # we always have only intercept for l2 (clearance)
+  n3 <- sum(startsWith(names(fit$theta.hat), "p")) # number of covariates for pi including covariates (prevalence probability)
 
   logl <- function(theta.hat, p){ # loglikelihood function for within score test
     left <- data$left
