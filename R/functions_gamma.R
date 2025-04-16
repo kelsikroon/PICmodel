@@ -126,16 +126,16 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
     # model covariates:
     l2_x <- c() # no covariates for clearance/cure
 
-    if (prog_model == 'prog ~ 1'){
+    if (fit$model[[1]] == 'prog ~ 1'){
       l1_x <- c() # null model without covariates
     }else{
-      l1_x <- trimws(strsplit(substr(prog_model, 8, nchar(prog_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+      l1_x <- trimws(strsplit(substr(fit$model[[1]], 8, nchar(fit$model[[1]])), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
     }
 
-    if (prev_model == 'prev ~ 1'){
+    if (fit$model[[2]] == 'prev ~ 1'){
       pi_x <- c() # null model without covariates
     }else{
-      pi_x <- trimws(strsplit(substr(prev_model, 8, nchar(prev_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+      pi_x <- trimws(strsplit(substr(fit$model[[2]], 8, nchar(fit$model[[2]])), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
     }
 
     l1_coef <- theta.hat[1:n1] # store coefficients for l1 (progression)
