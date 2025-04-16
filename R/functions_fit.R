@@ -5,12 +5,12 @@
 #' It is possible for the user to select the covariates that will be used for each parameter.
 #'
 #' @param data Data used to fit the model containing columns for each term in l1_x and pi_x. The first three columns must be: \itemize{
-#' @param prog_model A string in the format "prog ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Defaults to "prog ~ 1", which is an intercept only model (i.e., without covariates).
-#' @param prev_model A string in the format "prev ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Defaults to "prev ~ 1", which is an intercept only model (i.e., without covariates).
 #' \item left interval giving the last time a patient was seen without the disease
 #' \item right interval giving the first time a patient was seen with the disease (can be Inf for right-censored cases)
 #' \item z indicator for prevalent/incident disease. The data must contain observed prevalent (z=1) and incident (z=0) cases, however some cases may be set to unknown (i.e., z=`NA`) for instance if there were no visits between baseline and disease detection.
 #' }
+#' @param prog_model A string in the format "prog ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the progression rate parameter (must match column name(s) in the input data). Defaults to "prog ~ 1", which is an intercept only model (i.e., without covariates).
+#' @param prev_model A string in the format "prev ~ x1 + x2 + ...", where x1, x2 are the names of covariates used in the parameter (probability of prevalent disease) (must match column name(s) in the input data). Defaults to "prev ~ 1", which is an intercept only model (i.e., without covariates).
 #' @param short.runs Number of runs of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 20
 #' @param short.iter Number of max iterations used in one run of the 'Short' EM algorithm used to determine initial values for the EM algorithm. Defaults to 10
 #' @param short.epsilon Convergence criteria used in the 'Short' EM algorithm to determine initial values. Defaults to 0.1.
