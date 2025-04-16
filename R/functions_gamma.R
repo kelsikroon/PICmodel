@@ -14,7 +14,7 @@ simulator.gamma <- function(n, params, k = 2, interval=3, include.h=T){
   l1 <- exp(params[2])
   l2 <- exp(params[3])
   p <- exp(params[4])/(1+exp(params[4]))
-  z <- rep(0, n) # create the indicator variable Z
+  z <- rep(0, n) # create the indicator variable
 
   # disease process
   t1 <- ifelse(rbinom(n, 1, p)==1, 0, Inf) # prevalent CIN2/3
@@ -102,9 +102,9 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
   fixed.h <- fit$fixed.h
   n <- length(data$right)
 
-  n1 <- length(fit$model[[1]]) +1 # number of covariates for l1 (progression)
-  n2 <- length(fit$model[[2]]) +1 # number of covariates for l2 (clearance)
-  n3 <- length(fit$model[[3]]) +1 # number of covariates for pi (prevalence probability)
+  n1 <- sum(startsWith(names(fit$theta.hat), "g")) # number of covariates for l1 including intercept (progression)
+  n2 <- 1 # we always have only intercept for l2 (clearance)
+  n3 <- sum(startsWith(names(fit$theta.hat), "p")) # number of covariates for pi including covariates (prevalence probability)
 
   logl <- function(theta.hat, p){ # loglikelihood function for within score test
     left <- data$left
@@ -122,11 +122,28 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
       h <- NA
     }
 
+
+    # model covariates:
+    l2_x <- c() # no covariates for clearance/cure
+
+    if (prog_model == 'prog ~ 1'){
+      l1_x <- c() # null model without covariates
+    }else{
+      l1_x <- trimws(strsplit(substr(prog_model, 8, nchar(prog_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+    }
+
+    if (prev_model == 'prev ~ 1'){
+      pi_x <- c() # null model without covariates
+    }else{
+      pi_x <- trimws(strsplit(substr(prev_model, 8, nchar(prev_model)), "[+]")[[1]]) # split model input at every plus sign and ignore the first 7 characters
+    }
+
     l1_coef <- theta.hat[1:n1] # store coefficients for l1 (progression)
     l2_coef <- theta.hat[(n1+1):(n1+n2)] # store coefficients for l2 (clearance)
     pi_coef <- theta.hat[(n1+n2+1):(n1+n2+n3)] # store coefficients for pi (prevalence)
     coefs <- list(l1_coef, l2_coef, pi_coef) # make list of coefficients
     lengths <- c(n1, n2, n3) # store number of coefficients for each main parameter
+    coefs_names <- list(l1_x, l2_x, pi_x)
 
     for (param in 1:3){# loop through parameters and add to a temporary expression which we will take exp() of and store at the end of the loop
       temp_expression <- 0
@@ -134,7 +151,7 @@ score.test.gamma <- function(fit, dh = 1e-5, accuracy = 4, data){
         if (i ==1) { # if i=1 then only add intercept
           temp_expression <- temp_expression + coefs[[param]][i]
         }else{ # if i>1 then add coefficient of that parameter multiplied by the data column responding to same coefficient
-          temp_expression <- temp_expression + coefs[[param]][i]*data[[fit$model[[param]][i-1]]]
+          temp_expression <- temp_expression + coefs[[param]][i]*data[[coefs_names[[param]][i-1]]]
         }
       }
 
